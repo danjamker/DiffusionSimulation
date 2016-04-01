@@ -1,0 +1,8 @@
+networkx
+matplotlib
+python-louvain
+powerlaw
+numpy
+mrjob
+scipy
+powerlaw

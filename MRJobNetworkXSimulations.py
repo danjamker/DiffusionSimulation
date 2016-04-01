@@ -161,18 +161,6 @@ class MRJobNetworkXSimulations(MRJob):
                    combiner=self.combiner,
                    reducer=self.reducer)
         ]
-        # return [
-        #     MRStep(mapper_init=self.mapper_init,
-        #            mapper=self.mapper,
-        #            mapper_final=self.mapper_final)
-        # ]
-        # return [
-        #     MRStep(mapper_init=self.mapper_init_read,
-        #            mapper=self.mapper_read,
-        #            mapper_final=self.mapper_final,
-        #            combiner=self.combiner,
-        #            reducer=self.reducer)
-        # ]
 
 
 if __name__ == '__main__':

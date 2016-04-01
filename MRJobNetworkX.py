@@ -64,7 +64,6 @@ class MRJobNetworkX(MRJob):
                 r_a_l = pd.read_json(v["result_act"])
                 r_u_l = pd.read_json(v["result_user"])
             else:
-                print(v["result_user"])
                 r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
                 r_u_l = r_u_l.groupby(r_u_l.index).mean()
 

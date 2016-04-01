@@ -70,7 +70,7 @@ class MRJobNetworkXSimulations(MRJob):
             df4.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(['numberActivatedUsers'],
                                                                                        verify_integrity=True),
             how='outer', lsuffix="_m3", rsuffix="_m4")
-        # TODO join in the new dataframe
+
         result3_user = df5.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
             ['numberActivatedUsers'], verify_integrity=True)
         result_user = result1_user.join(result2_user, how='outer').join(result3_user, how='outer',

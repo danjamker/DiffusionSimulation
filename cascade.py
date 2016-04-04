@@ -250,7 +250,7 @@ class actualCascade(cascade):
     def next(self):
         try:
             activate = next(self.dfi)
-            self.activated_name = "s:" + activate[1][1]
+            self.activated_name = activate[1][1]
             self.activated = self.name_to_id[self.activated_name]
             if self.G.has_node(self.name_to_id[self.activated]):
                 nx.set_node_attributes(self.G, 'activated',

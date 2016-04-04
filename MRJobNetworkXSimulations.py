@@ -35,8 +35,7 @@ class MRJobNetworkXSimulations(MRJob):
             except StopIteration as err:
                 break
             except Exception as e:
-                print
-                e
+                print e
         return idx, values
 
     def mapper_init(self):

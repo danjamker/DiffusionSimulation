@@ -94,12 +94,15 @@ class GraphPrep:
         self.G = G_tmp
         return self
 
-    def normalise(self):
-
+    def remove_self_loop(self):
+        self.G.remove_edge(self.G.selfloop_edges())
         return self
 
 if __name__ == '__main__':
     GraphPrep(
-        "/Users/danielkershaw/PycharmProjects/DiffusionSimulation/data/Twitter_GEO_network.csv").to_undriected().detect_communities().save_to_pickle(
-        "./../data/go-pickle.gpickle")
+        "/Users/danielkershaw/PycharmProjects/DiffusionSimulation/data/Twitter_GEO_network.csv"). \
+        to_undriected(). \
+        remove_self_loop(). \
+        detect_communities(). \
+        save_to_pickle("./../data/go-pickle-2.gpickle")
     # save_to_pickle("../data/Twitter_GEO_network.pickle")

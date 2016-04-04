@@ -21,6 +21,7 @@ class MRJobNetworkX(MRJob):
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
         self.add_file_option('--network')
+        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -57,7 +58,7 @@ class MRJobNetworkX(MRJob):
             result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
                 ['numberOfActivations'], verify_integrity=True)
 
-        yield "apple", {"apple": line, "result_user": result_user.to_json(orient='records'),
+        yield "apple", {"file": line, "name": line.split("/")[-1], "result_user": result_user.to_json(orient='records'),
                      "result_act": result_act.to_json(orient='records')}
 
     def combiner(self, key, values):
@@ -93,14 +94,19 @@ class MRJobNetworkX(MRJob):
         yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
 
     def steps(self):
-        return [
-            MRStep(mapper_init=self.mapper_init,
-                   mapper=self.mapper,
-                   combiner=self.combiner,
-                   reducer=self.reducer
-                   )
-        ]
-
-
+        if self.options.avrage == 1:
+            return [
+                MRStep(mapper_init=self.mapper_init,
+                       mapper=self.mapper,
+                       combiner=self.combiner,
+                       reducer=self.reducer
+                       )
+            ]
+        else:
+            return [
+                MRStep(mapper_init=self.mapper_init,
+                       mapper=self.mapper
+                       )
+            ]
 if __name__ == '__main__':
     MRJobNetworkX.run()

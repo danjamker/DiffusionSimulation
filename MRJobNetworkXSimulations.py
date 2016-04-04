@@ -13,6 +13,7 @@ import metrics
 
 
 class MRJobNetworkXSimulations(MRJob):
+
     OUTPUT_PROTOCOL = JSONValueProtocol
     INPUT_PROTOCOL = JSONValueProtocol
 
@@ -33,7 +34,9 @@ class MRJobNetworkXSimulations(MRJob):
                 idx.append(cas.getStep())
             except StopIteration as err:
                 break
-
+            except Exception as e:
+                print
+                e
         return idx, values
 
     def mapper_init(self):

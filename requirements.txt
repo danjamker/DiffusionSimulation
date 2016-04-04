@@ -8,3 +8,5 @@ scipy
 powerlaw
 pandas
 hdfs
+jupyter
+ipython

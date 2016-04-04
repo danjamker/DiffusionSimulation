@@ -68,18 +68,6 @@ class metric:
 
                 self.inffectedCommunities = len({k: v for k, v in self.activatedUsersPerCommunity.items() if v > 0})
 
-                # if step_time is not None:
-                #     self.time_sequence.append(step_time)
-                #
-                #     if len(self.time_sequence) > self.window:
-                #         tmp_df = pd.DataFrame(self.time_sequence)[0].diff().iloc[-50:]
-                #         self.avrage_time_set = tmp_df.mean()
-                #         std = tmp_df.std()
-                #         if std == 0 or self.avrage_time_set == 0:
-                #             self.cv_avrage_time_set = 0
-                #         else:
-                #             self.cv_avrage_time_set = tmp_df.std() / self.avrage_time_set
-
     def asMap(self):
         return {"numberActivatedUsers": self.numberActivatedUsers,
                 "numberOfActivations": self.numberOfActivations,

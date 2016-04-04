@@ -16,6 +16,7 @@ pip-selfcheck.json
 *.iml
 
 ## Directory-based project format:
+/output
 .idea/
 # if you remove the above rule, at least ignore the following:
 

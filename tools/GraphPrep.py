@@ -12,7 +12,7 @@ class GraphPrep:
         self.l = edges.columns.values.tolist()
         self.l.remove('source')
         self.l.remove('target')
-        self.G = nx.from_pandas_dataframe(edges, 'source', 'target', self.l)
+        self.G = nx.from_pandas_dataframe(edges, 'source', 'target', self.l, create_using=nx.DiGraph())
 
     def swap_edges(self):
         # Random small world
@@ -83,10 +83,23 @@ class GraphPrep:
     def deg_graph(self):
         return self.G
 
+    def to_undriected(self):
+        G_tmp = self.G.to_undirected()  # copy
+        for (u, v) in self.G.edges():
+            if not self.G.has_edge(v, u):
+                G_tmp.remove_edge(u, v)
+            else:
+                avr = (self.G.get_edge_data(u, v)["weight"] + self.G.get_edge_data(v, u)["weight"]) / 2
+                G_tmp.add_edge(u, v, weight=avr)
+        self.G = G_tmp
+        return self
+
+    def normalise(self):
+
+        return self
 
 if __name__ == '__main__':
-    GraphPrep("/Users/kershad1/PycharmProjects/DiffusionSimulation/data/user_reddit_comment_network_2014_significant"). \
-        shuffle_source(). \
-        shuffle_target(). \
-        save_edges_to_csv("./../data/edges-reddit-shuffle.csv").save_nodes_to_csv("./../data/nodes-reddit-shuffle.csv")
+    GraphPrep(
+        "/Users/danielkershaw/PycharmProjects/DiffusionSimulation/data/Twitter_GEO_network.csv").to_undriected().detect_communities().save_to_pickle(
+        "./../data/go-pickle.gpickle")
     # save_to_pickle("../data/Twitter_GEO_network.pickle")

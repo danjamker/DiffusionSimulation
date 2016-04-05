@@ -1,7 +1,8 @@
+from random import shuffle
+
 import community
 import networkx as nx
 import pandas as pd
-from random import shuffle
 
 
 class GraphPrep:
@@ -99,9 +100,14 @@ class GraphPrep:
 
 if __name__ == '__main__':
     GraphPrep(
-        "/Users/danielkershaw/PycharmProjects/DiffusionSimulation/data/Twitter_GEO_network.csv"). \
+        "/Users/kershad1/PycharmProjects/DiffusionSimulation/data/user_reddit_comment_network_2014_significant"). \
         to_undriected(). \
         remove_self_loop(). \
         detect_communities(). \
-        save_to_pickle("./../data/go-pickle-2.gpickle")
+        save_to_pickle("./../data/pickle/reddit-comment-significant-2014.gpickle")
+
+    GraphPrep(
+        "/Users/kershad1/PycharmProjects/DiffusionSimulation/data/user_reddit_comment_network_2014_significant"). \
+        shuffle_target(). \
+        save_edges_to_csv("./../data/shuffel/reddit-comment-significant-2014.csv")
     # save_to_pickle("../data/Twitter_GEO_network.pickle")

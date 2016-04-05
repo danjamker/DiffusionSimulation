@@ -1,7 +1,6 @@
+import hdfs
 import os
 import random
-
-import hdfs
 
 try:
     from StringIO import StringIO
@@ -9,9 +8,9 @@ except ImportError:
     from io import StringIO
 
 try:
-    import urlparse
+    from urlparse import urlparse
 except ImportError:
-    import urllib.parse
+    from urllib.parse import urlparse
 import gzip
 
 
@@ -26,8 +25,8 @@ def sampel(list, count):
 
 def read(path):
     if path.startswith('http://'):
-        client = hdfs.client.Client("http://" + urlparse.urlparse(path).netloc)
-        reader = client.read(urlparse.urlparse(path).path, encoding='utf-8')
+        client = hdfs.client.Client("http://" + urlparse(path).netloc)
+        reader = client.read(urlparse(path).path, encoding='utf-8')
         return reader
     else:
         return open(path, 'r')
@@ -35,16 +34,16 @@ def read(path):
 
 def list(path):
     if path.startswith('http://'):
-        client = hdfs.client.Client("http://" + urlparse.urlparse(path).netloc)
-        reader = client.list(urlparse.urlparse(path).path)
+        client = hdfs.client.Client("http://" + urlparse(path).netloc)
+        reader = client.list(urlparse(path).path)
         return reader
     else:
         return os.listdir(path)
 
 
 def loadGZ(path):
-    client = hdfs.client.Client("http://" + urlparse.urlparse(path).netloc)
-    with client.read(urlparse.urlparse(path).path) as r:
+    client = hdfs.client.Client("http://" + urlparse(path).netloc)
+    with client.read(urlparse(path).path) as r:
         buf = StringIO.StringIO(r.read())
         gzip_f = gzip.GzipFile(fileobj=buf)
         content = gzip_f.read()

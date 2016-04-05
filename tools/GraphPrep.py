@@ -1,8 +1,7 @@
-from random import shuffle
-
 import community
 import networkx as nx
 import pandas as pd
+from random import shuffle
 
 
 class GraphPrep:
@@ -95,7 +94,7 @@ class GraphPrep:
         return self
 
     def remove_self_loop(self):
-        self.G.remove_edge(self.G.selfloop_edges())
+        self.G.remove_edges_from(self.G.selfloop_edges())
         return self
 
 if __name__ == '__main__':

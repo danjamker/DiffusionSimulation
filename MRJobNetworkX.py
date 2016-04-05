@@ -1,8 +1,16 @@
 from __future__ import division
 
-import StringIO
 import gzip
-import urlparse
+
+try:
+    from BytesIO import BytesIO
+except ImportError:
+    from io import BytesIO
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 import hdfs
 import networkx as nx
@@ -43,9 +51,10 @@ class MRJobNetworkX(MRJob):
         nx.set_node_attributes(self.G, 'activated', {node: 0 for node in self.G.nodes()})
 
     def mapper(self, _, line):
-        client = hdfs.client.Client("http://" + urlparse.urlparse(line).netloc)
-        with client.read(urlparse.urlparse(line).path) as r:
-            buf = StringIO.StringIO(r.read())
+        client = hdfs.client.Client("http://" + urlparse(line).netloc)
+        print(line)
+        with client.read(urlparse(line).path) as r:
+            buf = BytesIO(r.read())
             if ".gz" in line:
                 gzip_f = gzip.GzipFile(fileobj=buf)
                 content = gzip_f.read()

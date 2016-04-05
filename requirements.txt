@@ -5,7 +5,6 @@ powerlaw
 numpy
 mrjob
 scipy
-powerlaw
 pandas
 hdfs
 jupyter

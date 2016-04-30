@@ -57,8 +57,8 @@ class MRJobNetworkX(MRJob):
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
         print(urlparse(line).path)
         if line[-1] != "#":
-            #        with client.read(urlparse(line).path) as r:
-            with open(urlparse(line).path) as r:
+            with client.read(urlparse(line).path) as r:
+                # with open(urlparse(line).path) as r:
                 buf = BytesIO(r.read())
                 if ".gz" in line:
                     gzip_f = gzip.GzipFile(fileobj=buf)

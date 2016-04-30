@@ -4,7 +4,7 @@ import Tools
 
 
 def main(f, t):
-    with open(t, 'w') as file_:
+    with open(t, 'w+') as file_:
         for file in Tools.list(f):
             print(file)
             try:

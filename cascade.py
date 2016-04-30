@@ -10,7 +10,7 @@ import pandas as pd
 
 
 class cascade:
-    def __init__(self, G):
+    def __init__(self, G, itterations=10000):
         self.G = deepcopy(G)
         self.cascase_id = 1
         self.step = 1
@@ -20,6 +20,7 @@ class cascade:
         self.numberactivated = 0
         self.n = set([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
         self.a = set([n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0])
+        self.iterations = itterations
 
     def __iter__(self):
         return self
@@ -63,7 +64,7 @@ class cascade:
 
 class randomModel(cascade):
     def next(self):
-        if len(self.a) <= self.numberOfNodes:
+        if self.step < self.iterations and len(self.n) > 0:
             activate = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
             self.activated = activate
             if activate != None:
@@ -77,7 +78,7 @@ class randomModel(cascade):
 
 class randomActive(cascade):
     def next(self):
-        if len(self.n) > 0:
+        if self.step < self.iterations and len(self.n) > 0:
             if self.decision(0.85):
                 activate = random.choice(self.G.nodes())
                 self.activated = activate
@@ -102,7 +103,7 @@ class randomActive(cascade):
 
 class CascadeNabours(cascade):
     def next(self):
-        if len(self.n) > 0:
+        if self.step < self.iterations and len(self.n) > 0:
             if self.decision(0.85):
                 node = random.sample(self.a, 1)[0]
                 l = self.G.neighbors(node)
@@ -131,7 +132,7 @@ class CascadeNabours(cascade):
 
 class CascadeNaboursWeight(cascade):
     def next(self):
-        if len(self.n) > 0:
+        if self.step < self.iterations and len(self.n) > 0:
             if self.decision(0.85):
                 node = random.sample(self.a, 1)[0]
                 l = self.G.neighbors(node)
@@ -162,7 +163,7 @@ class CascadeNaboursWeight(cascade):
 
 class NodeWithHighestActiveNabours(cascade):
     def next(self):
-        if len(self.n) > 0:
+        if self.step < self.iterations and len(self.n) > 0:
             if self.decision(0.85):
                 node = random.sample(self.a, 1)[0]
                 activate = self.select(self.G, node)
@@ -201,7 +202,7 @@ class NodeWithHighestActiveNabours(cascade):
 
 class NodeInSameCommunity(cascade):
     def next(self):
-        if len(self.n) > 0:
+        if self.step < self.iterations and len(self.n) > 0:
             if self.decision(0.85):
                 node = random.sample(self.a, 1)[0]
                 activate = self.select(self.G, node)
@@ -232,7 +233,8 @@ class NodeInSameCommunity(cascade):
 
 class actualCascade(cascade):
     def __init__(self, file, G):
-        self.G = deepcopy(G)
+        # self.G = deepcopy(G)
+        self.G = G
         self.f = file
         self.cascase_id = 1
         self.step = 1

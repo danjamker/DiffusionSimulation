@@ -43,7 +43,7 @@ def process_frame(data):
 
     ActivateionExposure = result_act[["ActivateionExposure"]]
     ActivateionExposure.columns = ['m1']
-    ActivateionExposure.loc[:, 'm1'] = ActivateionExposure.loc[:, 'm1'].rolling(window=100, center=False).mean()
+    ActivateionExposure.loc[:, 'm1'] = ActivateionExposure.loc[:, 'm1'].rolling(window=5, center=False).mean()
 
     pl = ActivateionExposure.plot(ax=axes[2, 0])
     pl.set_xlabel('Posts (P)')
@@ -51,17 +51,17 @@ def process_frame(data):
 
     UserExposure = result_user[["UserExposure"]]
     UserExposure.columns = ['m1']
-    UserExposure.loc[:, 'm1'] = UserExposure.loc[:, 'm1'].rolling(window=100, center=False).mean()
+    UserExposure.loc[:, 'm1'] = UserExposure.loc[:, 'm1'].rolling(window=5, center=False).mean()
 
     pl = UserExposure.plot(ax=axes[2, 1])
     pl.set_xlabel('Users (U)')
     # # plt.set_ylabel(r'$\frac{N^u}{N_{M1}^u}$', rotation=0)
 
-    plt.savefig("./images/" + data["name"])
+    plt.savefig("./../images/" + data["name"])
 
 
 if __name__ == '__main__':
 
-    with open('./../output/geo-ino-1/part-00000') as data_file:
+    with open('./../output/geo-ino-track/part-00000') as data_file:
         for frame in data_file:
             process_frame(json.loads(frame))

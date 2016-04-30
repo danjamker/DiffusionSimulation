@@ -48,59 +48,65 @@ class MRJobNetworkX(MRJob):
 
     def mapper_init(self):
         self.G = nx.read_gpickle(self.options.network)
-        nx.set_node_attributes(self.G, 'activated', {node: 0 for node in self.G.nodes()})
+        self.tmp = {node: 0 for node in self.G.nodes()}
+        nx.set_node_attributes(self.G, 'activated', self.tmp)
 
     def mapper(self, _, line):
+        nx.set_node_attributes(self.G, 'activated', self.tmp)
+
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-        print(line)
-        with client.read(urlparse(line).path) as r:
-            buf = BytesIO(r.read())
-            if ".gz" in line:
-                gzip_f = gzip.GzipFile(fileobj=buf)
-                content = gzip_f.read()
-                idx, values = self.runCascade(cascade.actualCascade(StringIO.StringIO(content), self.G))
-            else:
-                idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
-            df = pd.DataFrame(values, index=idx)
-            result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
-                ['numberActivatedUsers'], verify_integrity=True)
-            result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
-                ['numberOfActivations'], verify_integrity=True)
+        print(urlparse(line).path)
+        if line[-1] != "#":
+            #        with client.read(urlparse(line).path) as r:
+            with open(urlparse(line).path) as r:
+                buf = BytesIO(r.read())
+                if ".gz" in line:
+                    gzip_f = gzip.GzipFile(fileobj=buf)
+                    content = gzip_f.read()
+                    idx, values = self.runCascade(cascade.actualCascade(StringIO.StringIO(content), self.G))
+                else:
+                    idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
+                df = pd.DataFrame(values, index=idx)
+                result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
+                    ['numberActivatedUsers'], verify_integrity=True)
+                result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
+                    ['numberOfActivations'], verify_integrity=True)
 
-        yield "apple", {"file": line, "name": line.split("/")[-1], "result_user": result_user.to_json(orient='records'),
-                     "result_act": result_act.to_json(orient='records')}
+            yield "apple", {"file": line, "name": line.split("/")[-1],
+                            "result_user": result_user.to_json(orient='records'),
+                            "result_act": result_act.to_json(orient='records')}
 
-    def combiner(self, key, values):
-        r_u_l = None
-        r_a_l = None
-        for v in values:
-            if r_u_l is None:
-                r_a_l = pd.read_json(v["result_act"])
-                r_u_l = pd.read_json(v["result_user"])
-            else:
-                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
+        def combiner(self, key, values):
+            r_u_l = None
+            r_a_l = None
+            for v in values:
+                if r_u_l is None:
+                    r_a_l = pd.read_json(v["result_act"])
+                    r_u_l = pd.read_json(v["result_user"])
+                else:
+                    r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
+                    r_u_l = r_u_l.groupby(r_u_l.index).mean()
 
-                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
+                    r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
+                    r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+            yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
 
-    def reducer(self, key, values):
-        r_u_l = None
-        r_a_l = None
-        for v in values:
-            if r_u_l is None:
-                r_a_l = pd.read_json(v["result_act"])
-                r_u_l = pd.read_json(v["result_user"])
-            else:
-                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
+        def reducer(self, key, values):
+            r_u_l = None
+            r_a_l = None
+            for v in values:
+                if r_u_l is None:
+                    r_a_l = pd.read_json(v["result_act"])
+                    r_u_l = pd.read_json(v["result_user"])
+                else:
+                    r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
+                    r_u_l = r_u_l.groupby(r_u_l.index).mean()
 
-                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
+                    r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
+                    r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+            yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
 
     def steps(self):
         if self.options.avrage == 1:

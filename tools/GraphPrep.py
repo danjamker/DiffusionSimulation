@@ -99,15 +99,29 @@ class GraphPrep:
         return self
 
 if __name__ == '__main__':
-    GraphPrep(
-        "/Users/kershad1/PycharmProjects/DiffusionSimulation/data/user_reddit_comment_network_2014_significant"). \
-        to_undriected(). \
-        remove_self_loop(). \
-        detect_communities(). \
-        save_to_pickle("./../data/pickle/reddit-comment-significant-2014.gpickle")
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/twitter_geo_network"). \
+    #     to_undriected(). \
+    #     remove_self_loop(). \
+    #     detect_communities(). \
+    #     save_to_pickle("./../data/pickle/twitter_geo_network.gpickle")
+    #
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/twitter_mention_network"). \
+    #     to_undriected(). \
+    #     remove_self_loop(). \
+    #     detect_communities(). \
+    #     save_to_pickle("./../data/pickle/twitter_mention_network.gpickle")
+
 
     GraphPrep(
-        "/Users/kershad1/PycharmProjects/DiffusionSimulation/data/user_reddit_comment_network_2014_significant"). \
+        "/Users/kershad1/Downloads/twitter_geo_network"). \
         shuffle_target(). \
-        save_edges_to_csv("./../data/shuffel/reddit-comment-significant-2014.csv")
-    # save_to_pickle("../data/Twitter_GEO_network.pickle")
+        shuffle_source(). \
+        save_edges_to_csv("./../data/shuffel/twitter_geo_network_shuffel.csv")
+
+    GraphPrep(
+        "/Users/kershad1/Downloads/twitter_mention_network"). \
+        shuffle_target(). \
+        shuffle_source(). \
+        save_edges_to_csv("./../data/shuffel/twitter_mention_network_shuffel.csv")

@@ -18,6 +18,8 @@ import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
+from __future__ import print_function
+import sys
 
 import cascade
 import metrics
@@ -25,6 +27,9 @@ import metrics
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
+
+    def eprint(*args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
 
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
@@ -54,7 +59,7 @@ class MRJobNetworkX(MRJob):
     def mapper(self, _, line):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-
+        print(line)
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:
@@ -75,37 +80,37 @@ class MRJobNetworkX(MRJob):
                             "result_user": result_user.tail(1).to_json(orient='records'),
                             "result_act": result_act.tail(1).to_json(orient='records')}
 
-        def combiner(self, key, values):
-            r_u_l = None
-            r_a_l = None
-            for v in values:
-                if r_u_l is None:
-                    r_a_l = pd.read_json(v["result_act"])
-                    r_u_l = pd.read_json(v["result_user"])
-                else:
-                    r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                    r_u_l = r_u_l.groupby(r_u_l.index).mean()
+    def combiner(self, key, values):
+        r_u_l = None
+        r_a_l = None
+        for v in values:
+            if r_u_l is None:
+                r_a_l = pd.read_json(v["result_act"])
+                r_u_l = pd.read_json(v["result_user"])
+            else:
+                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
+                r_u_l = r_u_l.groupby(r_u_l.index).mean()
 
-                    r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                    r_a_l = r_a_l.groupby(r_a_l.index).mean()
+                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
+                r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-            yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
 
-        def reducer(self, key, values):
-            r_u_l = None
-            r_a_l = None
-            for v in values:
-                if r_u_l is None:
-                    r_a_l = pd.read_json(v["result_act"])
-                    r_u_l = pd.read_json(v["result_user"])
-                else:
-                    r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                    r_u_l = r_u_l.groupby(r_u_l.index).mean()
+    def reducer(self, key, values):
+        r_u_l = None
+        r_a_l = None
+        for v in values:
+            if r_u_l is None:
+                r_a_l = pd.read_json(v["result_act"])
+                r_u_l = pd.read_json(v["result_user"])
+            else:
+                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
+                r_u_l = r_u_l.groupby(r_u_l.index).mean()
 
-                    r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                    r_a_l = r_a_l.groupby(r_a_l.index).mean()
+                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
+                r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-            yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
 
     def steps(self):
         if self.options.avrage == 1:

@@ -65,14 +65,27 @@ class MRJobNetworkX(MRJob):
                 else:
                     idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
                 df = pd.DataFrame(values, index=idx)
+
                 result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
                     ['numberActivatedUsers'], verify_integrity=True)
                 result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
                     ['numberOfActivations'], verify_integrity=True)
 
-            yield "apple", {"file": line, "name": line.split("/")[-1],
-                            "result_user": result_user.loc[-1:].to_json(orient='records'),
-                            "result_act": result_act.loc[-1:].to_json(orient='records')}
+                if len(result_user.index) > 50:
+                    result_user_100 = df.loc[:50].drop_duplicates(subset='numberActivatedUsers',
+                                                                  keep='first').set_index(
+                        ['numberActivatedUsers'], verify_integrity=True)
+                    result_act_100 = df.loc[:50].drop_duplicates(subset='numberOfActivations', keep='first').set_index(
+                        ['numberOfActivations'], verify_integrity=True)
+
+                    ruy = result_user_100.loc[-1:]
+                    ruy.index = [len(result_user.index)]
+                    ray = result_act_100.loc[-1:]
+                    ray.index = [len(result_act.index)]
+
+                    yield "apple", {"file": line, "name": line.split("/")[-1],
+                                    "result_user": ruy.to_json(orient='records'),
+                                    "result_act": ray.to_json(orient='records')}
 
     def combiner(self, key, values):
         r_u_l = None
@@ -121,5 +134,7 @@ class MRJobNetworkX(MRJob):
                        mapper=self.mapper
                        )
             ]
+
+
 if __name__ == '__main__':
     MRJobNetworkX.run()

@@ -78,18 +78,18 @@ class MRJobNetworkX(MRJob):
                     result_act_100 = df.loc[:50].drop_duplicates(subset='numberOfActivations', keep='first').set_index(
                         ['numberOfActivations'], verify_integrity=True)
 
-                    ruy = result_user_100.loc[-1:]
+                    ruy = result_user_100.iloc[-1:]
                     ruy.reindex([len(result_user.index)])
-                    ray = result_act_100.loc[-1:]
+                    ray = result_act_100.iloc[-1:]
                     ray.reindex([len(result_act.index)])
 
                     print {"file": line, "name": line.split("/")[-1],
-                           "result_user": ruy.to_json(orient='records'),
-                           "result_act": ray.to_json(orient='records')}
+                           "result_user": ruy.to_json(),
+                           "result_act": ray.to_json()}
 
                     yield "apple", {"file": line, "name": line.split("/")[-1],
-                                    "result_user": ruy.to_json(orient='records'),
-                                    "result_act": ray.to_json(orient='records')}
+                                    "result_user": ruy.to_json(),
+                                    "result_act": ray.to_json()}
 
     def combiner(self, key, values):
         r_u_l = None
@@ -105,7 +105,7 @@ class MRJobNetworkX(MRJob):
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
                 r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 
     def reducer(self, key, values):
         r_u_l = None
@@ -121,7 +121,7 @@ class MRJobNetworkX(MRJob):
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
                 r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 
     def steps(self):
         if self.options.avrage == 1:

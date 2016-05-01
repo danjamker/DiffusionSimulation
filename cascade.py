@@ -1,12 +1,11 @@
 from __future__ import division
 
-import random
-from abc import abstractmethod
-from copy import deepcopy
-
 import networkx as nx
 import numpy as np
 import pandas as pd
+import random
+from abc import abstractmethod
+from copy import deepcopy
 
 
 class cascade:
@@ -241,8 +240,7 @@ class actualCascade(cascade):
         self.d = {}
         self.activated = ""
         dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
-                          # compression=None).drop_duplicates(subset=[2], keep='last')
-                          compression=None).drop_duplicates(cols=[2], take_last=True)
+                          compression=None).drop_duplicates(subset=[2], keep='last')
         self.df = dtf.set_index(pd.DatetimeIndex(dtf[2])).sort_index();
         self.dfi = self.df.iterrows();
         self.step_time = None

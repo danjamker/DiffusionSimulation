@@ -79,9 +79,9 @@ class MRJobNetworkX(MRJob):
                         ['numberOfActivations'], verify_integrity=True)
 
                     ruy = result_user_100.loc[-1:]
-                    ruy.index = [len(result_user.index)]
+                    ruy.reindex([len(result_user.index)])
                     ray = result_act_100.loc[-1:]
-                    ray.index = [len(result_act.index)]
+                    ray.reindex([len(result_act.index)])
 
                     yield "apple", {"file": line, "name": line.split("/")[-1],
                                     "result_user": ruy.to_json(orient='records'),

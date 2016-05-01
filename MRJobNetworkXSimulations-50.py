@@ -70,7 +70,7 @@ class MRJobNetworkXSimulations(MRJob):
 
             ruy = result_user_50.loc[-1:]
             ruy.index = [len(result_user.index)]
-            ray = result_act_50.loc[-1:]
+            ray = result_act_50d.loc[-1:]
             ray.index = [len(result_act.index)]
 
             yield "tmp", {"result_user": self.ruy.to_json(orient='records'),

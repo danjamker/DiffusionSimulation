@@ -59,6 +59,7 @@ atlassian-ide-plugin.xml
 com_crashlytics_export_strings.xml
 crashlytics.properties
 /networks
+/bin
 crashlytics-build.properties
 ### IPythonNotebook template
 # Temporary data

@@ -53,9 +53,8 @@ class MRJobNetworkX(MRJob):
 
     def mapper(self, _, line):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
-
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-        print(urlparse(line).path)
+
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:

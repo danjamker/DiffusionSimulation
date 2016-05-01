@@ -83,10 +83,6 @@ class MRJobNetworkX(MRJob):
                     ray = result_act_100.iloc[-1:]
                     ray.index = [len(result_act.index)]
 
-                    print {"file": line, "name": line.split("/")[-1],
-                           "result_user": ruy.to_json(),
-                           "result_act": ray.to_json()}
-
                     yield "apple", {"file": line, "name": line.split("/")[-1],
                                     "result_user": ruy.to_json(),
                                     "result_act": ray.to_json()}

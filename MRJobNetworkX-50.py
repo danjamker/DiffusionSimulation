@@ -79,9 +79,9 @@ class MRJobNetworkX(MRJob):
                         ['numberOfActivations'], verify_integrity=True)
 
                     ruy = result_user_100.iloc[-1:]
-                    ruy.reindex([len(result_user.index)], inplace=True)
+                    ruy = ruy.reindex([len(result_user.index)])
                     ray = result_act_100.iloc[-1:]
-                    ray.reindex([len(result_act.index)], inplace=True)
+                    ray = ray.reindex([len(result_act.index)])
 
                     print {"file": line, "name": line.split("/")[-1],
                            "result_user": ruy.to_json(),

@@ -18,8 +18,6 @@ import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
-from __future__ import print_function
-import sys
 
 import cascade
 import metrics
@@ -27,9 +25,6 @@ import metrics
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
-
-    def eprint(*args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
 
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
@@ -59,7 +54,7 @@ class MRJobNetworkX(MRJob):
     def mapper(self, _, line):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-        print(line)
+
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:

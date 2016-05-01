@@ -79,7 +79,7 @@ class MRJobNetworkX(MRJob):
                         ['numberOfActivations'], verify_integrity=True)
 
                     ruy = result_user_100.iloc[-1:]
-                    ruy.set_index([len(result_user.index)], inplace=True)
+                    ruy.reindex([len(result_user.index)], inplace=True)
                     ray = result_act_100.iloc[-1:]
                     ray.reindex([len(result_act.index)], inplace=True)
 

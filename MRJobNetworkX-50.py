@@ -71,7 +71,7 @@ class MRJobNetworkX(MRJob):
                 result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
                     ['numberOfActivations'], verify_integrity=True)
 
-                if len(result_user.index) > 50:
+                if len(df.index) > 50:
                     result_user_100 = df.loc[:50].drop_duplicates(subset='numberActivatedUsers',
                                                                   keep='first').set_index(
                         ['numberActivatedUsers'], verify_integrity=True)
@@ -79,9 +79,9 @@ class MRJobNetworkX(MRJob):
                         ['numberOfActivations'], verify_integrity=True)
 
                     ruy = result_user_100.iloc[-1:]
-                    ruy.reindex([len(result_user.index)])
+                    ruy.set_index([len(result_user.index)], inplace=True)
                     ray = result_act_100.iloc[-1:]
-                    ray.reindex([len(result_act.index)])
+                    ray.reindex([len(result_act.index)], inplace=True)
 
                     print {"file": line, "name": line.split("/")[-1],
                            "result_user": ruy.to_json(),

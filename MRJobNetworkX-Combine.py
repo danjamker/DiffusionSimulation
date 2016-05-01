@@ -72,8 +72,8 @@ class MRJobNetworkX(MRJob):
                     ['numberOfActivations'], verify_integrity=True)
 
             yield "apple", {"file": line, "name": line.split("/")[-1],
-                            "result_user": result_user.tail(1).to_json(orient='records'),
-                            "result_act": result_act.tail(1).to_json(orient='records')}
+                            "result_user": result_user.loc[-1:].to_json(orient='records'),
+                            "result_act": result_act.loc[-1:].to_json(orient='records')}
 
     def combiner(self, key, values):
         r_u_l = None

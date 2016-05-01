@@ -80,10 +80,8 @@ class MRJobNetworkX(MRJob):
 
                     ruy = result_user_100.iloc[-1:]
                     ruy.index = [len(result_user.index)]
-                    print ruy
                     ray = result_act_100.iloc[-1:]
-                    ray = ray.reindex([len(result_act.index)])
-                    print ruy
+                    ray.index = [len(result_act.index)]
 
                     print {"file": line, "name": line.split("/")[-1],
                            "result_user": ruy.to_json(),

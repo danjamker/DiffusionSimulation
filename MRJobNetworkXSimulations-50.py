@@ -18,6 +18,8 @@ class MRJobNetworkXSimulations(MRJob):
     def configure_options(self):
         super(MRJobNetworkXSimulations, self).configure_options()
         self.add_file_option('--network')
+        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
+        self.add_passthrough_option('--limit', type='int', default=50, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -64,9 +66,12 @@ class MRJobNetworkXSimulations(MRJob):
 
         result_act, result_user = self.generate_dataframes(df, df2, df3, df4, df5)
 
-        if len(result_user.index) > 50:
-            result_act_50, result_user_50 = self.generate_dataframes(df.loc[:50], df2.loc[:50], df3.loc[:50],
-                                                                     df4.loc[:50], df5.loc[:50])
+        if len(result_user.index) > self.options.limit:
+            result_act_50, result_user_50 = self.generate_dataframes(df.loc[:self.options.limit],
+                                                                     df2.loc[:self.options.limit],
+                                                                     df3.loc[:self.options.limit],
+                                                                     df4.loc[:self.options.limit],
+                                                                     df5.loc[:self.options.limit])
 
             ruy = result_user_50.loc[-1:]
             ruy.index = [len(result_user.index)]

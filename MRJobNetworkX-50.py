@@ -30,6 +30,7 @@ class MRJobNetworkX(MRJob):
         super(MRJobNetworkX, self).configure_options()
         self.add_file_option('--network')
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
+        self.add_passthrough_option('--limit', type='int', default=50, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -71,11 +72,12 @@ class MRJobNetworkX(MRJob):
                 result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
                     ['numberOfActivations'], verify_integrity=True)
 
-                if len(df.index) > 50:
-                    result_user_100 = df.loc[:50].drop_duplicates(subset='numberActivatedUsers',
+                if len(df.index) > self.options.limit:
+                    result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
                                                                   keep='first').set_index(
                         ['numberActivatedUsers'], verify_integrity=True)
-                    result_act_100 = df.loc[:50].drop_duplicates(subset='numberOfActivations', keep='first').set_index(
+                    result_act_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberOfActivations',
+                                                                                 keep='first').set_index(
                         ['numberOfActivations'], verify_integrity=True)
 
                     ruy = result_user_100.iloc[-1:]

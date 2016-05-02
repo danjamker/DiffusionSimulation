@@ -42,16 +42,15 @@ class MRJobNetworkXSimulations(MRJob):
 
         self.G = nx.read_gpickle(self.options.network)
         nx.set_node_attributes(self.G, 'activated', {node: 0 for node in self.G.nodes()})
+
         seed = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
         nx.set_node_attributes(self.G, 'activated', {seed: 1})
 
-        self.r_u_l = None
-        self.r_a_l = None
 
     def mapper(self, _, line):
 
         diffusion_size = int(line)
-
+        print diffusion_size
         idx, values = self.runCascade(cascade.randomActive(self.G, itterations=diffusion_size))
         idx1, values1 = self.runCascade(cascade.CascadeNabours(self.G, itterations=diffusion_size))
         idx2, values2 = self.runCascade(cascade.NodeWithHighestActiveNabours(self.G, itterations=diffusion_size))

@@ -1,7 +1,6 @@
 from __future__ import division
 
 import operator
-
 import scipy.stats
 
 
@@ -19,8 +18,12 @@ class metric:
         self.userUsageEntorpy = 0
         self.ActivateionExposure = 0
         self.UserExposure = 0
+        self.avrageActivateionExposure = 0
+        self.avrageUserExposure = 0
         self.sequence = []
         self.time_sequence = []
+        self.ActivateionExposureArray = []
+        self.UserExposureArray = []
         self.inffectedCommunities = 0
         self.window = 100
         self.avrage_time_set = 0
@@ -54,17 +57,26 @@ class metric:
                 except:
                     self.userUsageDominance = 0
 
+                # Shouldnt this be a list of number of the number of times a users has used an activation
                 self.usageEntorpy = scipy.stats.entropy(
-                    [self.activationsPerCommunity[c] / self.numberOfActivations for c in self.Communities])
+                    [self.activationsPerCommunity[c] for c in self.Communities])
 
                 self.userUsageEntorpy = scipy.stats.entropy(
-                    [self.activatedUsersPerCommunity[c] / self.numberActivatedUsers for c in self.Communities])
+                    [self.activatedUsersPerCommunity[c] for c in self.Communities])
+
 
                 self.ActivateionExposure = sum([self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
                                                 self.G.node[ns]['activated'] > 0])
 
+                self.ActivateionExposureArray.append(self.ActivateionExposure)
+                self.avrageActivateionExposure = sum(self.ActivateionExposureArray) / float(
+                    len(self.ActivateionExposureArray))
+
                 self.UserExposure = len([self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
                                          self.G.node[ns]['activated'] > 0])
+
+                self.UserExposureArray.append(self.UserExposure)
+                self.avrageUserExposure = sum(self.UserExposureArray) / float(len(self.UserExposureArray))
 
                 self.inffectedCommunities = len({k: v for k, v in self.activatedUsersPerCommunity.items() if v > 0})
 
@@ -77,6 +89,8 @@ class metric:
                 "userUsageEntorpy": self.userUsageEntorpy,
                 "ActivateionExposure": self.ActivateionExposure,
                 "UserExposure": self.UserExposure,
+                "avrageUserExposure": self.avrageUserExposure,
+                "avrageActivateionExposure": self.avrageActivateionExposure,
                 "inffectedCommunities": self.inffectedCommunities,
                 "cv_avrage_time_set": self.cv_avrage_time_set,
                 "avrage_time_set": self.avrage_time_set}

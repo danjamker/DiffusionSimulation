@@ -77,7 +77,8 @@ class metric:
 
                 self.UserExposureArray.append(self.UserExposure)
                 self.avrageUserExposure = sum(self.UserExposureArray) / float(len(self.UserExposureArray))
-
+                print self.UserExposureArray
+                print self.avrageUserExposure
                 self.inffectedCommunities = len({k: v for k, v in self.activatedUsersPerCommunity.items() if v > 0})
 
     def asMap(self):

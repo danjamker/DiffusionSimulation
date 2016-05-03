@@ -72,8 +72,8 @@ class MRJobNetworkX(MRJob):
                     ['numberOfActivations'], verify_integrity=True)
 
             yield "apple", {"file": line, "name": line.split("/")[-1],
-                            "result_user": result_user.to_json(orient='records'),
-                            "result_act": result_act.to_json(orient='records')}
+                            "result_user": result_user.to_json(),
+                            "result_act": result_act.to_json()}
 
     def combiner(self, key, values):
         r_u_l = None
@@ -89,7 +89,7 @@ class MRJobNetworkX(MRJob):
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
                 r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 
     def reducer(self, key, values):
         r_u_l = None
@@ -105,7 +105,7 @@ class MRJobNetworkX(MRJob):
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
                 r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 
     def steps(self):
         if self.options.avrage == 1:

@@ -63,8 +63,6 @@ class metric:
 
                 self.userUsageEntorpy = scipy.stats.entropy(
                     [self.activatedUsersPerCommunity[c] for c in self.Communities])
-                print self.userUsageEntorpy
-                print [self.activatedUsersPerCommunity[c] for c in self.Communities]
 
                 self.ActivateionExposure = sum([self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
                                                 self.G.node[ns]['activated'] > 0])

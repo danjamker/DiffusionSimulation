@@ -66,7 +66,6 @@ class MRJobNetworkXSimulations(MRJob):
         df = pd.DataFrame({"ids": values}, index=idx)
 
         for i in range(1, self.options.resampeling):
-            print (float(sampelFraction) / float(100))
             yield "tmp", df.sample(frac=(float(sampelFraction) / float(100))).to_json()
 
     def steps(self):

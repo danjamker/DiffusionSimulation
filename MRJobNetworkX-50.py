@@ -89,35 +89,21 @@ class MRJobNetworkX(MRJob):
                                     "result_user": ruy.to_json(),
                                     "result_act": ray.to_json()}
 
-    def combiner(self, key, values):
-        r_u_l = None
-        r_a_l = None
-        for v in values:
-            if r_u_l is None:
-                r_a_l = pd.read_json(v["result_act"])
-                r_u_l = pd.read_json(v["result_user"])
-            else:
-                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
-
-                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
-
-        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
-
     def reducer(self, key, values):
         r_u_l = None
         r_a_l = None
         for v in values:
+            print v
+
             if r_u_l is None:
                 r_a_l = pd.read_json(v["result_act"])
                 r_u_l = pd.read_json(v["result_user"])
             else:
                 r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
-
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
+
+        r_u_l = r_u_l.groupby(r_u_l.index).mean()
+        r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
         yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 

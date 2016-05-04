@@ -21,7 +21,7 @@ from mrjob.step import MRStep
 
 import cascade
 import metrics
-
+import json
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
@@ -74,51 +74,39 @@ class MRJobNetworkX(MRJob):
                             "result_user": result_user.loc[-1:].to_json(orient='records'),
                             "result_act": result_act.loc[-1:].to_json(orient='records')}
 
-    def combiner(self, key, values):
-        r_u_l = None
-        r_a_l = None
-        for v in values:
-            if r_u_l is None:
-                r_a_l = pd.read_json(v["result_act"])
-                r_u_l = pd.read_json(v["result_user"])
-            else:
-                r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
-
-                r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
-
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+    def mappertwo(self, _, line):
+        yield "apple", json.loads(line)
 
     def reducer(self, key, values):
         r_u_l = None
         r_a_l = None
         for v in values:
+            print v
+
             if r_u_l is None:
                 r_a_l = pd.read_json(v["result_act"])
                 r_u_l = pd.read_json(v["result_user"])
             else:
                 r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
-                r_u_l = r_u_l.groupby(r_u_l.index).mean()
-
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
-                r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(orient='records'), "result_act": r_a_l.to_json(orient='records')}
+        r_u_l = r_u_l.groupby(r_u_l.index).mean()
+        r_a_l = r_a_l.groupby(r_a_l.index).mean()
+
+        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
 
     def steps(self):
         if self.options.avrage == 1:
             return [
-                MRStep(mapper_init=self.mapper_init,
-                       mapper=self.mapper,
-                       combiner=self.combiner,
+                MRStep(
+                    mapper=self.mappertwo,
                        reducer=self.reducer
                        )
             ]
         else:
             return [
-                MRStep(mapper_init=self.mapper_init,
-                       mapper=self.mapper
+                MRStep(
+                    mapper=self.mappertwo
                        )
             ]
 if __name__ == '__main__':

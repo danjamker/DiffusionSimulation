@@ -1,8 +1,8 @@
 from __future__ import division
 
+import logging
 import operator
 import scipy.stats
-
 
 class metric:
     def __init__(self, G):
@@ -64,16 +64,17 @@ class metric:
                 self.userUsageEntorpy = scipy.stats.entropy(
                     [self.activatedUsersPerCommunity[c] for c in self.Communities])
 
-                self.ActivateionExposure = sum([self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
-                                                self.G.node[ns]['activated'] > 0])
+                exposures = [self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
+                             self.G.node[ns]['activated'] > 0]
+
+                self.ActivateionExposure = sum(exposures)
 
                 self.ActivateionExposureArray.append(self.ActivateionExposure)
                 self.avrageActivateionExposure = sum(self.ActivateionExposureArray) / float(
                     len(self.ActivateionExposureArray))
 
-                self.UserExposure = len([self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
-                                         self.G.node[ns]['activated'] > 0])
-
+                self.UserExposure = len(exposures)
+                logging.info('I told you so')
                 self.UserExposureArray.append(self.UserExposure)
                 self.avrageUserExposure = sum(self.UserExposureArray) / float(len(self.UserExposureArray))
 

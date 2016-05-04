@@ -67,7 +67,7 @@ class MRJobNetworkXSimulations(MRJob):
 
         for i in range(1, self.options.resampeling):
             print (float(sampelFraction) / float(10))
-            yield "tmp", df.sample(frac=(float(sampelFraction) / float(10))).to_json()
+            yield "tmp", df.sample(frac=(float(sampelFraction) / float(100))).to_json()
 
     def steps(self):
         return [

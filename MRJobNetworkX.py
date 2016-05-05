@@ -74,7 +74,7 @@ class MRJobNetworkX(MRJob):
             yield "apple", {"file": line, "name": line.split("/")[-1],
                             "result_user": result_user.to_json(),
                             "result_act": result_act.to_json(),
-                            "raw": df.to_json()}
+                            "raw": df.groupby(df.index).first().to_json()}
 
     def combiner(self, key, values):
         r_u_l = None

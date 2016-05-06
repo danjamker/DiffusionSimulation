@@ -241,6 +241,9 @@ class actualCascade(cascade):
         self.activated = ""
         dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
                           compression=None).drop_duplicates(subset=[2], keep='last')
+
+        # Filters out users that are not in the network
+        dft = dft[dft[1].isin(G.nodes())]
         self.df = dtf.set_index(pd.DatetimeIndex(dtf[2])).sort_index();
         self.dfi = self.df.iterrows();
         self.step_time = None

@@ -243,7 +243,7 @@ class actualCascade(cascade):
                           compression=None).drop_duplicates(subset=[2], keep='last')
 
         # Filters out users that are not in the network
-        dftt = dtf[dtf[1].isin(G.nodes())]
+        dftt = dtf[dtf[1].isin(self.G.nodes())]
         self.df = dftt.set_index(pd.DatetimeIndex(dftt[2])).sort_index();
         self.dfi = self.df.iterrows();
         self.step_time = None

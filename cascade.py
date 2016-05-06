@@ -252,7 +252,6 @@ class actualCascade(cascade):
         try:
             activate = next(self.dfi)
             self.activated_name = activate[1][1]
-            if self.G.has_node(self.activated_name):
             self.activated = self.name_to_id[self.activated_name]
             if self.G.has_node(self.name_to_id[self.activated]):
                 nx.set_node_attributes(self.G, 'activated',

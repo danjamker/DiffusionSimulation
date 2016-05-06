@@ -65,11 +65,11 @@ class MRJobNetworkX(MRJob):
                     idx, values = self.runCascade(cascade.actualCascade(StringIO.StringIO(content), self.G))
                 else:
                     idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
-                df = pd.DataFrame(values, index=idx)
-                result_user = df.copy(deep=True).drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
-                    ['numberActivatedUsers'], verify_integrity=True)
-                result_act = df.copy(deep=True).drop_duplicates(subset='numberOfActivations', keep='first').set_index(
-                    ['numberOfActivations'], verify_integrity=True)
+                df = pd.DataFrame(values, index=idx).sort_index()
+                result_user = df.copy().drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
+                    ['numberActivatedUsers'], verify_integrity=True).sort_index()
+                result_act = df.copy().drop_duplicates(subset='numberOfActivations', keep='first').set_index(
+                    ['numberOfActivations'], verify_integrity=True).sort_index()
 
             yield "apple", {"file": line, "name": line.split("/")[-1],
                             "result_user": result_user.to_json(),

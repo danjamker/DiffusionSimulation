@@ -89,8 +89,8 @@ class MRJobNetworkXSimulations(MRJob):
 
     def steps(self):
         return [
+            MRStep(mapper=self.csize),
             MRStep(
-                mapper=self.csize,
                 mapper_init=self.mapper_init,
                 mapper=self.mapper
             )

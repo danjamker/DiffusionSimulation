@@ -100,10 +100,6 @@ class MRJobNetworkXSimulations(MRJob):
             MRStep(
                 mapper_init=self.csize_init,
                 mapper=self.csize
-            ),
-            MRStep(
-                mapper_init=self.mapper_init,
-                mapper=self.mapper
             )
         ]
 

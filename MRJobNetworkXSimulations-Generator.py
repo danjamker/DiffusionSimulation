@@ -43,7 +43,7 @@ class MRJobNetworkXSimulations(MRJob):
 
     def csize(self, _, line):
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-
+        print line
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:

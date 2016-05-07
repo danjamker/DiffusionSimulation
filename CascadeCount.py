@@ -52,4 +52,4 @@ class CascadeCount(MRJob):
 
 
 if __name__ == '__main__':
-    MRJobNetworkX.run()
+    CascadeCount.run()

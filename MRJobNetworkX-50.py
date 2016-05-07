@@ -50,6 +50,8 @@ class MRJobNetworkX(MRJob):
 
     def mapper(self, _, line):
         df = pd.read_json(json.loads(line)["raw"])
+        result_act = pd.read_json(json.loads(line)["result_act"])
+        result_user = pd.read_json(json.loads(line)["result_user"])
 
         if len(df.index) > self.options.limit:
             result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',

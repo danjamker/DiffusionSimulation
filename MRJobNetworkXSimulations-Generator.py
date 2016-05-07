@@ -13,7 +13,6 @@ import cascade
 class MRJobNetworkXSimulations(MRJob):
 
     OUTPUT_PROTOCOL = JSONValueProtocol
-    INPUT_PROTOCOL = JSONValueProtocol
 
     def configure_options(self):
         super(MRJobNetworkXSimulations, self).configure_options()

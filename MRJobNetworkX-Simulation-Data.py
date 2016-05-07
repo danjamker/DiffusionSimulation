@@ -51,7 +51,7 @@ class MRJobNetworkX(MRJob):
     def mapper(self, _, line):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
 
-        idx, values = self.runCascade(cascade.actualCascade(line, self.G))
+        idx, values = self.runCascade(cascade.actualCascadeDF(line, self.G))
         df = pd.DataFrame(values, index=idx)
         result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
             ['numberActivatedUsers'], verify_integrity=True)

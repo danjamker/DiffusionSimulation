@@ -53,7 +53,7 @@ class MRJobNetworkXSimulations(MRJob):
 
                 dtf = pd.read_csv(buf, index_col=False, header=None, sep="\t", engine="python",
                                   compression=None).drop_duplicates(subset=[2], keep='last')
-                yield "apple", len(dft.index)
+                yield "apple", len(dtf.index)
 
     def mapper_init(self):
 

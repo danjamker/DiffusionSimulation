@@ -92,6 +92,8 @@ class MRJobNetworkXSimulations(MRJob):
 
         for x in range(0, self.options.numberofloops):
             nx.set_node_attributes(self.G, 'activated', self.tmp)
+            seed = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
+            nx.set_node_attributes(self.G, 'activated', {seed: 1})
 
             if self.options.modle == 0:
                 idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))

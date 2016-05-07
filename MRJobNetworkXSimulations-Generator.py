@@ -18,7 +18,6 @@ class MRJobNetworkXSimulations(MRJob):
         super(MRJobNetworkXSimulations, self).configure_options()
         self.add_file_option('--network')
         self.add_passthrough_option('--modle', type='int', default=0, help='...')
-        self.add_passthrough_option('--itterations', type='int', default=20000, help='...')
         self.add_passthrough_option('--sampelFraction', type='int', default=10, help='...')
         self.add_passthrough_option('--resampeling', type='int', default=10, help='...')
 

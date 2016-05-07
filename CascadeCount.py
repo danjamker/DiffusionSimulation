@@ -45,7 +45,7 @@ class CascadeCount(MRJob):
 
     def steps(self):
         return [
-            MRStep(mapper_init=self.mapper_init,
+            MRStep(
                    mapper=self.mapper
                    )
         ]

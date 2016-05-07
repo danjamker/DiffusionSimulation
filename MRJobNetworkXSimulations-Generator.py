@@ -20,6 +20,7 @@ class MRJobNetworkXSimulations(MRJob):
         self.add_passthrough_option('--modle', type='int', default=0, help='...')
         self.add_passthrough_option('--sampelFraction', type='int', default=10, help='...')
         self.add_passthrough_option('--resampeling', type='int', default=10, help='...')
+        self.add_passthrough_option('--numberofloops', type='int', default=100, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -69,21 +70,22 @@ class MRJobNetworkXSimulations(MRJob):
         iteration = int(line) * 10
         sampelFraction = self.options.sampelFraction
 
-        if self.options.modle == 0:
-            idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))
-        elif self.options.modle == 1:
-            idx, values = self.runCascade(cascade.CascadeNabours(self.G, itterations=iteration))
-        elif self.options.modle == 2:
-            idx, values = self.runCascade(cascade.NodeWithHighestActiveNabours(self.G, itterations=iteration))
-        elif self.options.modle == 3:
-            idx, values = self.runCascade(cascade.NodeInSameCommunity(self.G, itterations=iteration))
-        elif self.options.modle == 4:
-            idx, values = self.runCascade(cascade.CascadeNaboursWeight(self.G, itterations=iteration))
+        for x in range(0, self.options.numberofloops):
+            if self.options.modle == 0:
+                idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))
+            elif self.options.modle == 1:
+                idx, values = self.runCascade(cascade.CascadeNabours(self.G, itterations=iteration))
+            elif self.options.modle == 2:
+                idx, values = self.runCascade(cascade.NodeWithHighestActiveNabours(self.G, itterations=iteration))
+            elif self.options.modle == 3:
+                idx, values = self.runCascade(cascade.NodeInSameCommunity(self.G, itterations=iteration))
+            elif self.options.modle == 4:
+                idx, values = self.runCascade(cascade.CascadeNaboursWeight(self.G, itterations=iteration))
 
-        df = pd.DataFrame({"ids": values}, index=idx)
+            df = pd.DataFrame({"ids": values}, index=idx)
 
-        for i in range(1, self.options.resampeling):
-            yield "tmp", df.sample(frac=(float(sampelFraction) / float(100))).to_json()
+            for i in range(1, self.options.resampeling):
+                yield "tmp", df.sample(frac=(float(sampelFraction) / float(100))).to_json()
 
     def steps(self):
         return [

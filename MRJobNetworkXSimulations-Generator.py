@@ -11,6 +11,7 @@ import cascade
 
 
 class MRJobNetworkXSimulations(MRJob):
+
     OUTPUT_PROTOCOL = JSONValueProtocol
     INPUT_PROTOCOL = JSONValueProtocol
 
@@ -37,6 +38,9 @@ class MRJobNetworkXSimulations(MRJob):
                 print e
         return idx, values
 
+    def csize_init(self):
+        self.G = nx.read_gpickle(self.options.network)
+
     def csize(self, _, line):
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
 
@@ -53,7 +57,10 @@ class MRJobNetworkXSimulations(MRJob):
 
                 dtf = pd.read_csv(buf, index_col=False, header=None, sep="\t", engine="python",
                                   compression=None).drop_duplicates(subset=[2], keep='last')
-                yield "apple", len(dtf.index)
+                dftt = dtf[dtf[1].isin(self.G.nodes())]
+
+                if len(dftt.index) > 0:
+                    yield "apple", len(dftt.index)
 
     def mapper_init(self):
 
@@ -68,7 +75,6 @@ class MRJobNetworkXSimulations(MRJob):
     def mapper(self, _, line):
 
         iteration = int(line) * 10
-        sampelFraction = self.options.sampelFraction
 
         for x in range(0, self.options.numberofloops):
             if self.options.modle == 0:
@@ -85,11 +91,14 @@ class MRJobNetworkXSimulations(MRJob):
             df = pd.DataFrame({"ids": values}, index=idx)
 
             for i in range(1, self.options.resampeling):
-                yield "tmp", df.sample(frac=(float(sampelFraction) / float(100))).to_json()
+                yield "tmp", df.sample(frac=(float(self.options.sampelFraction) / float(100))).to_json()
 
     def steps(self):
         return [
-            MRStep(mapper=self.csize),
+            MRStep(
+                mapper_init=self.csize_init,
+                mapper=self.csize
+            ),
             MRStep(
                 mapper_init=self.mapper_init,
                 mapper=self.mapper

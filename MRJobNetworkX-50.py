@@ -84,7 +84,7 @@ class MRJobNetworkX(MRJob):
         # r_u_l = r_u_l.groupby(r_u_l.index).mean()
         # r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
-        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
+        yield key, {"result_user": r_u_l.reset_index().to_json(), "result_act": r_a_l.reset_index().to_json()}
 
     def steps(self):
         if self.options.avrage == 1:

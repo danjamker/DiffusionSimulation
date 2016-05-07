@@ -10,7 +10,8 @@ from copy import deepcopy
 
 class cascade:
     def __init__(self, G, itterations=10000):
-        self.G = deepcopy(G)
+        # self.G = deepcopy(G)
+        self.G = G
         self.cascase_id = 1
         self.step = 1
         self.d = {}

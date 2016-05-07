@@ -76,6 +76,9 @@ class MRJobNetworkXSimulations(MRJob):
     def mapper_init(self):
 
         self.G = nx.read_gpickle(self.options.network)
+        self.tmp = {node: 0 for node in self.G.nodes()}
+        nx.set_node_attributes(self.G, 'activated', self.tmp)
+
         nx.set_node_attributes(self.G, 'activated', {node: 0 for node in self.G.nodes()})
         seed = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
         nx.set_node_attributes(self.G, 'activated', {seed: 1})
@@ -88,6 +91,8 @@ class MRJobNetworkXSimulations(MRJob):
         iteration = int(line) * 10
 
         for x in range(0, self.options.numberofloops):
+            nx.set_node_attributes(self.G, 'activated', self.tmp)
+
             if self.options.modle == 0:
                 idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))
             elif self.options.modle == 1:

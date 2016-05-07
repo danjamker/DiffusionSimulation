@@ -60,7 +60,7 @@ class MRJobNetworkXSimulations(MRJob):
                 dftt = dtf[dtf[1].isin(self.G.nodes())]
 
                 if len(dftt.index) > 0:
-                    yield "apple", len(dftt.index)
+                    yield ("apple", len(dftt.index))
 
     def mapper_init(self):
 

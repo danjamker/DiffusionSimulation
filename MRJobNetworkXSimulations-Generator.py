@@ -60,7 +60,8 @@ class MRJobNetworkXSimulations(MRJob):
                 dftt = dtf[dtf[1].isin(self.G.nodes())]
 
                 if len(dftt.index) > 0:
-                    yield ("apple", len(dftt.index))
+                    print len(dftt.index)
+                    yield (None, len(dftt.index))
 
     def mapper_init(self):
 
@@ -91,7 +92,7 @@ class MRJobNetworkXSimulations(MRJob):
             df = pd.DataFrame({"ids": values}, index=idx)
 
             for i in range(1, self.options.resampeling):
-                yield "tmp", df.sample(frac=(float(self.options.sampelFraction) / float(100))).to_json()
+                yield (None, df.sample(frac=(float(self.options.sampelFraction) / float(100))).to_json())
 
     def steps(self):
         return [

@@ -36,6 +36,24 @@ class MRJobNetworkXSimulations(MRJob):
                 print e
         return idx, values
 
+    def csize(self, _, line):
+        client = hdfs.client.Client("http://" + urlparse(line).netloc)
+
+        if line[-1] != "#":
+            with client.read(urlparse(line).path) as r:
+                # with open(urlparse(line).path) as r:
+                buf = BytesIO(r.read())
+
+                # If the data is in a GZipped file.
+                if ".gz" in line:
+                    gzip_f = gzip.GzipFile(fileobj=buf)
+                    content = gzip_f.read()
+                    buf = StringIO.StringIO(content)
+
+                dtf = pd.read_csv(buf, index_col=False, header=None, sep="\t", engine="python",
+                                  compression=None).drop_duplicates(subset=[2], keep='last')
+                yield "apple", len(dft.index)
+
     def mapper_init(self):
 
         self.G = nx.read_gpickle(self.options.network)
@@ -69,9 +87,11 @@ class MRJobNetworkXSimulations(MRJob):
 
     def steps(self):
         return [
-            MRStep(mapper_init=self.mapper_init,
-                   mapper=self.mapper
-                   )
+            MRStep(
+                mapper=self.csize,
+                mapper_init=self.mapper_init,
+                mapper=self.mapper
+            )
         ]
 
 

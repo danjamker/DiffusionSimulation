@@ -56,10 +56,10 @@ class MRJobNetworkX(MRJob):
         if len(df.index) > self.options.limit:
             result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
                                                                           keep='first').set_index(
-                ['numberActivatedUsers'], verify_integrity=True)
+                ['numberActivatedUsers'], verify_integrity=True, drop=False)
             result_act_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberOfActivations',
                                                                          keep='first').set_index(
-                ['numberOfActivations'], verify_integrity=True)
+                ['numberOfActivations'], verify_integrity=True, drop=False)
 
             ruy = result_user_100.iloc[-1:]
             ruy.index = [len(result_user.index)]

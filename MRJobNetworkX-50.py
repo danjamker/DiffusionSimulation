@@ -1,7 +1,5 @@
 from __future__ import division
 
-import gzip
-
 try:
     from BytesIO import BytesIO
 except ImportError:
@@ -12,16 +10,14 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
-import hdfs
 import networkx as nx
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
-import cascade
 import metrics
-
+import json
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
@@ -53,41 +49,24 @@ class MRJobNetworkX(MRJob):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
 
     def mapper(self, _, line):
-        nx.set_node_attributes(self.G, 'activated', self.tmp)
-        client = hdfs.client.Client("http://" + urlparse(line).netloc)
-        if line[-1] != "#":
-            with client.read(urlparse(line).path) as r:
-                # with open(urlparse(line).path) as r:
-                buf = BytesIO(r.read())
-                if ".gz" in line:
-                    gzip_f = gzip.GzipFile(fileobj=buf)
-                    content = gzip_f.read()
-                    idx, values = self.runCascade(cascade.actualCascade(StringIO.StringIO(content), self.G))
-                else:
-                    idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
-                df = pd.DataFrame(values, index=idx)
+        df = pd.read_json(json.loads(line)["raw"])
 
-                result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
-                    ['numberActivatedUsers'], verify_integrity=True)
-                result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
-                    ['numberOfActivations'], verify_integrity=True)
+        if len(df.index) > self.options.limit:
+            result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
+                                                                          keep='first').set_index(
+                ['numberActivatedUsers'], verify_integrity=True)
+            result_act_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberOfActivations',
+                                                                         keep='first').set_index(
+                ['numberOfActivations'], verify_integrity=True)
 
-                if len(df.index) > self.options.limit:
-                    result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
-                                                                  keep='first').set_index(
-                        ['numberActivatedUsers'], verify_integrity=True)
-                    result_act_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberOfActivations',
-                                                                                 keep='first').set_index(
-                        ['numberOfActivations'], verify_integrity=True)
+            ruy = result_user_100.iloc[-1:]
+            ruy.index = [len(result_user.index)]
+            ray = result_act_100.iloc[-1:]
+            ray.index = [len(result_act.index)]
 
-                    ruy = result_user_100.iloc[-1:]
-                    ruy.index = [len(result_user.index)]
-                    ray = result_act_100.iloc[-1:]
-                    ray.index = [len(result_act.index)]
-
-                    yield "apple", {"file": line, "name": line.split("/")[-1],
-                                    "result_user": ruy.to_json(),
-                                    "result_act": ray.to_json()}
+            yield "apple", {"file": line, "name": line.split("/")[-1],
+                            "result_user": ruy.to_json(),
+                            "result_act": ray.to_json()}
 
     def reducer(self, key, values):
         r_u_l = None

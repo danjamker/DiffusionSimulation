@@ -59,14 +59,20 @@ class MRJobNetworkX(MRJob):
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:
                 buf = BytesIO(r.read())
+
+                # If the data is in a GZipped file.
                 if ".gz" in line:
                     gzip_f = gzip.GzipFile(fileobj=buf)
                     content = gzip_f.read()
-                    idx, values = self.runCascade(cascade.actualCascade(StringIO.StringIO(content), self.G))
-                else:
-                    idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
+                    buf = StringIO.StringIO(content)
+
+                idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
                 df = pd.DataFrame(values, index=idx).sort_index()
+
+                #check to see if there is data within the dataframes.
                 if len(df.index) > 0:
+                    # Set the index to tbe the number of active users, this is then at the first instance that
+                    #A new user uses the actions
                     result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
                         ['numberActivatedUsers'], verify_integrity=True).sort_index()
                     result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(

@@ -1,15 +1,22 @@
 from __future__ import division
 
+import gzip
+
+try:
+    from BytesIO import BytesIO
+except ImportError:
+    from io import BytesIO
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+
 import hdfs
-import networkx as nx
 import pandas as pd
-import random
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
-
-import cascade
-
 
 class MRJobNetworkXSimulations(MRJob):
 

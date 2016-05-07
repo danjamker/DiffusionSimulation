@@ -39,6 +39,7 @@ class MRJobNetworkXSimulations(MRJob):
         return idx, values
 
     def csize_init(self):
+        print "d"
         self.G = nx.read_gpickle(self.options.network)
 
     def csize(self, _, line):

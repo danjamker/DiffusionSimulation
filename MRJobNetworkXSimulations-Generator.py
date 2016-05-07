@@ -38,13 +38,10 @@ class MRJobNetworkXSimulations(MRJob):
         return idx, values
 
     def csize_init(self):
-        print "d"
         self.G = nx.read_gpickle(self.options.network)
 
     def csize(self, _, line):
-        print "dddd"
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
-        print line
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
                 # with open(urlparse(line).path) as r:
@@ -61,7 +58,6 @@ class MRJobNetworkXSimulations(MRJob):
                 dftt = dtf[dtf[1].isin(self.G.nodes())]
 
                 if len(dftt.index) > 0:
-                    print len(dftt.index)
                     yield (None, len(dftt.index))
 
     def mapper_init(self):

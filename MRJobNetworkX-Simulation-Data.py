@@ -18,7 +18,7 @@ from mrjob.step import MRStep
 
 import cascade
 import metrics
-
+import json
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
@@ -51,7 +51,7 @@ class MRJobNetworkX(MRJob):
     def mapper(self, _, line):
         nx.set_node_attributes(self.G, 'activated', self.tmp)
 
-        idx, values = self.runCascade(cascade.actualCascadeDF(line, self.G))
+        idx, values = self.runCascade(cascade.actualCascadeDF(json.loads(line), self.G))
         df = pd.DataFrame(values, index=idx)
         result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
             ['numberActivatedUsers'], verify_integrity=True)

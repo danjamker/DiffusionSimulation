@@ -9,3 +9,4 @@ pandas
 hdfs
 jupyter
 ipython
+seaborn

@@ -43,6 +43,7 @@ class MRJobNetworkXSimulations(MRJob):
         self.G = nx.read_gpickle(self.options.network)
 
     def csize(self, _, line):
+        print "dddd"
         client = hdfs.client.Client("http://" + urlparse(line).netloc)
         print line
         if line[-1] != "#":

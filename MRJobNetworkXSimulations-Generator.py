@@ -49,7 +49,7 @@ class MRJobNetworkXSimulations(MRJob):
 
     def mapper(self, _, line):
 
-        iteration = self.options.itterations
+        iteration = int(line) * 10
         sampelFraction = self.options.sampelFraction
 
         if self.options.modle == 0:

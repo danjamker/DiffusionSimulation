@@ -74,8 +74,6 @@ class MRJobNetworkX(MRJob):
         r_u_l = None
         r_a_l = None
         for v in values:
-            print v
-
             if r_u_l is None:
                 r_a_l = pd.read_json(v["result_act"])
                 r_u_l = pd.read_json(v["result_user"])

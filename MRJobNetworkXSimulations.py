@@ -1,9 +1,8 @@
 from __future__ import division
 
-import random
-
 import networkx as nx
 import pandas as pd
+import random
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep

@@ -1,5 +1,6 @@
 from __future__ import division
 
+import hdfs
 import networkx as nx
 import pandas as pd
 import random

@@ -71,8 +71,7 @@ class MRJobNetworkXSimulations(MRJob):
                 dftt = dtf[dtf[1].isin(self.G.nodes())]
 
                 if len(dftt.index) > 0:
-                    for x in range(0, self.options.numberofloops):
-                       yield len(dftt.index), "tmp"
+                    yield len(dftt.index), "tmp"
 
     def csize_red(self, _, line):
         yield None, _
@@ -93,25 +92,27 @@ class MRJobNetworkXSimulations(MRJob):
     def mapper(self, _, line):
 
         iteration = int(line) * 10
-        nx.set_node_attributes(self.G, 'activated', self.tmp)
-        seed = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
-        nx.set_node_attributes(self.G, 'activated', {seed: 1})
+        for x in range(0, self.options.numberofloops):
 
-        if self.options.modle == 0:
-            idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))
-        elif self.options.modle == 1:
-            idx, values = self.runCascade(cascade.CascadeNabours(self.G, itterations=iteration))
-        elif self.options.modle == 2:
-            idx, values = self.runCascade(cascade.NodeWithHighestActiveNabours(self.G, itterations=iteration))
-        elif self.options.modle == 3:
-            idx, values = self.runCascade(cascade.NodeInSameCommunity(self.G, itterations=iteration))
-        elif self.options.modle == 4:
-            idx, values = self.runCascade(cascade.CascadeNaboursWeight(self.G, itterations=iteration))
+            nx.set_node_attributes(self.G, 'activated', self.tmp)
+            seed = random.choice([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
+            nx.set_node_attributes(self.G, 'activated', {seed: 1})
 
-        df = pd.DataFrame({"ids": values}, index=idx)
+            if self.options.modle == 0:
+                idx, values = self.runCascade(cascade.randomActive(self.G, itterations=iteration))
+            elif self.options.modle == 1:
+                idx, values = self.runCascade(cascade.CascadeNabours(self.G, itterations=iteration))
+            elif self.options.modle == 2:
+                idx, values = self.runCascade(cascade.NodeWithHighestActiveNabours(self.G, itterations=iteration))
+            elif self.options.modle == 3:
+                idx, values = self.runCascade(cascade.NodeInSameCommunity(self.G, itterations=iteration))
+            elif self.options.modle == 4:
+                idx, values = self.runCascade(cascade.CascadeNaboursWeight(self.G, itterations=iteration))
 
-        for i in range(1, self.options.resampeling):
-            yield None, df.sample(frac=(float(self.options.sampelFraction) / float(100))).to_json()
+            df = pd.DataFrame({"ids": values}, index=idx)
+
+            for i in range(1, self.options.resampeling):
+                yield None, df.sample(frac=(float(self.options.sampelFraction) / float(100))).to_json()
 
     def steps(self):
         return [

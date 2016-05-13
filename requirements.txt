@@ -10,3 +10,4 @@ hdfs
 jupyter
 ipython
 seaborn
+scikit-learn

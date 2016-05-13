@@ -10,6 +10,7 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
+import networkx as nx
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
@@ -24,6 +25,7 @@ class MRJobNetworkX(MRJob):
 
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
+        self.add_file_option('--network')
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
         self.add_passthrough_option('--limit', type='int', default=50, help='...')
 
@@ -42,10 +44,15 @@ class MRJobNetworkX(MRJob):
                 break
         return idx, values
 
+    def mapper_init(self):
+        self.G = nx.read_gpickle(self.options.network)
+        self.tmp = {node: 0 for node in self.G.nodes()}
+        nx.set_node_attributes(self.G, 'activated', self.tmp)
+
     def mapper(self, _, line):
-        df = pd.read_json(line["raw"])
-        result_act = pd.read_json(line["result_act"])
-        result_user = pd.read_json(line["result_user"])
+        df = pd.read_json(json.loads(line)["raw"])
+        result_act = pd.read_json(json.loads(line)["result_act"])
+        result_user = pd.read_json(json.loads(line)["result_user"])
 
         if len(df.index) > self.options.limit:
             result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
@@ -91,14 +98,14 @@ class MRJobNetworkX(MRJob):
     def steps(self):
         if self.options.avrage == 1:
             return [
-                MRStep(
+                MRStep(mapper_init=self.mapper_init,
                        mapper=self.mapper,
                        reducer=self.reducer
                        )
             ]
         else:
             return [
-                MRStep(
+                MRStep(mapper_init=self.mapper_init,
                        mapper=self.mapper
                        )
             ]

@@ -74,7 +74,6 @@ class metric:
                     len(self.ActivateionExposureArray))
 
                 self.UserExposure = len(exposures)
-                logging.info('I told you so')
                 self.UserExposureArray.append(self.UserExposure)
                 self.avrageUserExposure = sum(self.UserExposureArray) / float(len(self.UserExposureArray))
 

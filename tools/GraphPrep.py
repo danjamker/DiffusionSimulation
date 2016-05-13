@@ -4,6 +4,7 @@ import community
 import networkx as nx
 import pandas as pd
 
+import EdgeSwapGraph
 
 class GraphPrep:
     def __init__(self, path):
@@ -32,8 +33,6 @@ class GraphPrep:
 
         for e1, e2 in zip(edges, target):
             self.G.add_edge(e1[0], e2, e1[2])
-
-        edges = self.G.edges(data=True)
 
         return self
 
@@ -98,30 +97,32 @@ class GraphPrep:
         self.G.remove_edges_from(self.G.selfloop_edges())
         return self
 
+    def remove_unconnected_nodes(self):
+        outdeg = self.G.degree()
+        to_remove = [n for n in outdeg if outdeg[n] == 0]
+        self.G.remove_nodes_from(to_remove)
+        return self
+
+    def edge_swap(self, iterations=10):
+        EdgeSwapGraph.randomize_by_edge_swaps(iterations, self.G)
+        return self
 if __name__ == '__main__':
     # GraphPrep(
     #     "/Users/kershad1/Downloads/twitter_geo_network"). \
-    #     to_undriected(). \
-    #     remove_self_loop(). \
-    #     detect_communities(). \
-    #     save_to_pickle("./../data/pickle/twitter_geo_network.gpickle")
+    #     edge_swap(iterations=10). \
+    #     save_edges_to_csv("./../data/shuffel/twitter_geo_network_shuffel_2.csv")
     #
     # GraphPrep(
     #     "/Users/kershad1/Downloads/twitter_mention_network"). \
-    #     to_undriected(). \
-    #     remove_self_loop(). \
-    #     detect_communities(). \
-    #     save_to_pickle("./../data/pickle/twitter_mention_network.gpickle")
-
+    #     edge_swap(iterations=10). \
+    #     save_edges_to_csv("./../data/shuffel/twitter_mention_network_shuffel_2.csv")
+    #
 
     GraphPrep(
-        "/Users/kershad1/Downloads/twitter_geo_network"). \
-        shuffle_target(). \
-        shuffle_source(). \
-        save_edges_to_csv("./../data/shuffel/twitter_geo_network_shuffel.csv")
+        "/Users/kershad1/Downloads/reddit_comment_network"). \
+        edge_swap(iterations=10). \
+        save_edges_to_csv("./../data/shuffel/reddit_comment_network_shuffel_2.csv")
 
     GraphPrep(
-        "/Users/kershad1/Downloads/twitter_mention_network"). \
-        shuffle_target(). \
-        shuffle_source(). \
-        save_edges_to_csv("./../data/shuffel/twitter_mention_network_shuffel.csv")
+        "/Users/kershad1/Downloads/reddit_traversal_network"). \
+        edge_swap(iterations=10).save_edges_to_csv("./../data/shuffel/reddit_traversal_network_shuffel_3.csv")

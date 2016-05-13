@@ -10,21 +10,20 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
-import networkx as nx
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
 import metrics
-import json
+
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
+    INPUT_PROTOCOL = JSONValueProtocol
 
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
-        self.add_file_option('--network')
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
         self.add_passthrough_option('--limit', type='int', default=50, help='...')
 
@@ -43,15 +42,10 @@ class MRJobNetworkX(MRJob):
                 break
         return idx, values
 
-    def mapper_init(self):
-        self.G = nx.read_gpickle(self.options.network)
-        self.tmp = {node: 0 for node in self.G.nodes()}
-        nx.set_node_attributes(self.G, 'activated', self.tmp)
-
     def mapper(self, _, line):
-        df = pd.read_json(json.loads(line)["raw"])
-        result_act = pd.read_json(json.loads(line)["result_act"])
-        result_user = pd.read_json(json.loads(line)["result_user"])
+        df = pd.read_json(line["raw"])
+        result_act = pd.read_json(line["result_act"])
+        result_user = pd.read_json(line["result_user"])
 
         if len(df.index) > self.options.limit:
             result_user_100 = df.loc[:self.options.limit].drop_duplicates(subset='numberActivatedUsers',
@@ -65,8 +59,12 @@ class MRJobNetworkX(MRJob):
             ruy.index = [len(result_user.index)]
             ray = result_act_100.iloc[-1:]
             ray.index = [len(result_act.index)]
+            ray["depth"] = [len(result_act.index)]
+            ruy["depth"] = [len(result_user.index)]
+            ray["word"] = [line["file"].split("/")[-1]]
+            ruy["word"] = [line["file"].split("/")[-1]]
 
-            yield "apple", {"file": line, "name": line.split("/")[-1],
+            yield 50, {"name": line["file"].split("/")[-1],
                             "result_user": ruy.to_json(),
                             "result_act": ray.to_json()}
 
@@ -81,26 +79,26 @@ class MRJobNetworkX(MRJob):
                 r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
 
-        r_u_l = r_u_l.groupby(r_u_l.index).mean()
-        r_a_l = r_a_l.groupby(r_a_l.index).mean()
+        # r_u_l = r_u_l.groupby(r_u_l.index).mean()
+        # r_a_l = r_a_l.groupby(r_a_l.index).mean()
+        #
+        # r_u_l_std = r_u_l.groupby(r_u_l.index).std()
+        # r_a_l_std = r_a_l.groupby(r_a_l.index).std()
 
-        r_u_l_std = r_u_l.groupby(r_u_l.index).std()
-        r_a_l_std = r_a_l.groupby(r_a_l.index).std()
-
-        yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json(),
-                    "result_user_std": r_u_l_std.to_json(), "result_act_std": r_a_l_std.to_json()}
+        yield key, {"observation_level": key, "result_user": r_u_l.reset_index().to_json(),
+                    "result_act": r_a_l.reset_index().to_json()}
 
     def steps(self):
         if self.options.avrage == 1:
             return [
-                MRStep(mapper_init=self.mapper_init,
+                MRStep(
                        mapper=self.mapper,
                        reducer=self.reducer
                        )
             ]
         else:
             return [
-                MRStep(mapper_init=self.mapper_init,
+                MRStep(
                        mapper=self.mapper
                        )
             ]

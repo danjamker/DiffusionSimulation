@@ -1,17 +1,17 @@
 from __future__ import division
 
-import networkx as nx
-import numpy as np
-import pandas as pd
 import random
 from abc import abstractmethod
 from copy import deepcopy
 
+import networkx as nx
+import numpy as np
+import pandas as pd
+
 
 class cascade:
     def __init__(self, G, itterations=10000):
-        # self.G = deepcopy(G)
-        self.G = G
+        self.G = deepcopy(G)
         self.cascase_id = 1
         self.step = 1
         self.d = {}

@@ -3,7 +3,7 @@ from __future__ import division
 import logging
 import operator
 import scipy.stats
-
+import numpy as np
 class metric:
     def __init__(self, G):
         self.G = G
@@ -19,20 +19,35 @@ class metric:
         self.ActivateionExposure = 0
         self.UserExposure = 0
         self.avrageActivateionExposure = 0
+        self.cvActivateionExposure = 0
         self.avrageUserExposure = 0
+        self.cvUserExposure = 0
         self.sequence = []
-        self.time_sequence = []
         self.ActivateionExposureArray = []
         self.UserExposureArray = []
         self.inffectedCommunities = 0
         self.window = 100
+
+        #Time
         self.avrage_time_set = 0
         self.cv_avrage_time_set = 0
+        self.time_dif_sequence = []
+        self.current_time = None
+
+        #Diamiter
         self.diamiter = 0
+
+        #Surface
+        self.surface_step = []
+        self.surface_mean = 0
+        self.surface_cv = 0
+        self.surface = 0
+        self.surface_set = set()
 
     def add(self, n, step_time=None):
         if n is not None:
             if self.G.has_node(n):
+
                 node = self.G.node[n]
                 self.sequence.append(node)
 
@@ -42,6 +57,17 @@ class metric:
 
                 self.numberOfActivations += 1
                 self.activationsPerCommunity[node["community"]] += 1
+
+                #Compute time diffrence if provided
+                if step_time != None:
+                    if self.current_time == None:
+                        self.current_time = step_time
+                    else:
+                        self.time_dif_sequence.append( self.self.current_time - step_time)
+                        self.current_time = step_time
+                        self.avrage_time_set = np.mean(self.time_dif_sequence)
+                        self.cv_avrage_time_set = np.std(self.time_dif_sequence)/self.avrage_time_set
+
 
                 dominatcommunity = max(self.activationsPerCommunity.iteritems(), key=operator.itemgetter(1))[0]
 
@@ -64,20 +90,29 @@ class metric:
                 self.userUsageEntorpy = scipy.stats.entropy(
                     [self.activatedUsersPerCommunity[c] for c in self.Communities])
 
+                #Compute Activations
                 exposures = [self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if
                              self.G.node[ns]['activated'] > 0]
-
                 self.ActivateionExposure = sum(exposures)
-
                 self.ActivateionExposureArray.append(self.ActivateionExposure)
-                self.avrageActivateionExposure = sum(self.ActivateionExposureArray) / float(
-                    len(self.ActivateionExposureArray))
+                self.avrageActivateionExposure = np.mean(self.ActivateionExposureArray)
+                self.cvActivateionExposure = np.std(self.ActivateionExposureArray)/self.avrageActivateionExposure
 
+                #compute user exposure
                 self.UserExposure = len(exposures)
                 self.UserExposureArray.append(self.UserExposure)
-                self.avrageUserExposure = sum(self.UserExposureArray) / float(len(self.UserExposureArray))
+                self.avrageUserExposure = np.mean(self.UserExposureArray)
+                self.cvUserExposure = np.stf(self.UserExposureArray)/self.avrageActivateionExposure
 
                 self.inffectedCommunities = len({k: v for k, v in self.activatedUsersPerCommunity.items() if v > 0})
+
+                #Compute values for steps
+                self.surface_set |= [x for x in self.G.neighbors(node) if self.G[node][x]['weight'] == 0]
+                self.surface = len(self.surface_set)
+                self.surface.remove(n)
+                self.surface_step.append(len(self.surface_set))
+                self.surface_mean = np.mean(self.surface_step)
+                self.surface_cv =  np.std(self.surface_step)/self.surface_step
 
     def asMap(self):
         return {"numberActivatedUsers": self.numberActivatedUsers,

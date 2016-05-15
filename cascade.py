@@ -21,6 +21,7 @@ class cascade:
         self.n = set([n for n, attrdict in self.G.node.items() if attrdict['activated'] == 0])
         self.a = set([n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0])
         self.iterations = itterations
+        self.step_time = None
 
     def __iter__(self):
         return self
@@ -60,6 +61,9 @@ class cascade:
         :rtype: int
         '''
         return self.step
+
+    def getStepTime(self):
+        return self.step_time
 
 
 class randomModel(cascade):
@@ -241,13 +245,13 @@ class actualCascade(cascade):
         self.d = {}
         self.activated = ""
         dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
-                          compression=None).drop_duplicates(subset=[2], keep='last')
-
+                          compression=None, names=["word", "node", "time"]).drop_duplicates(subset=["time"],
+                                                                                            keep='last')
+        dtf['time'] = pd.to_datetime(dtf['time'])
         # Filters out users that are not in the network
-        dftt = dtf[dtf[1].isin(self.G.nodes())]
-        self.df = dftt.set_index(pd.DatetimeIndex(dftt[2])).sort_index();
+        dftt = dtf[dtf["node"].isin(self.G.nodes())]
+        self.df = dftt.set_index(pd.DatetimeIndex(dftt["time"])).sort_index();
         self.dfi = self.df.iterrows();
-        self.step_time = None
 
         # self.name_to_id = dict((d["name"], n) for n, d in self.G.nodes_iter(data=True))
         self.name_to_id = dict((n, n) for n, d in self.G.nodes_iter(data=True))
@@ -255,7 +259,8 @@ class actualCascade(cascade):
     def next(self):
         try:
             activate = next(self.dfi)
-            self.activated_name = activate[1][1]
+            self.activated_name = activate[1]["node"]
+            self.step_time = activate[1]["time"]
             self.activated = self.name_to_id[self.activated_name]
             if self.G.has_node(self.name_to_id[self.activated]):
                 nx.set_node_attributes(self.G, 'activated',
@@ -264,7 +269,7 @@ class actualCascade(cascade):
                 self.activated = None
 
             self.step += 1
-            self.step_time = pd.to_datetime(activate[1][2])
+            self.step_time = activate[1]["time"]
 
         except EOFError:
             raise StopIteration()

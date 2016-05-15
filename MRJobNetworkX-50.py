@@ -92,19 +92,27 @@ class MRJobNetworkX(MRJob):
         result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).max()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).min()
         result_user["time_step"] = result_user["time"].diff()
-        print result_user["time_step"]
-        result_user["time_step_mean"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).mean()
-        result_user["time_step_cv"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).std()
-        result_user["time_step_median"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).median()
-        result_user["time_step_min"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).min()
-        result_user["time_step_max"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).max()
-        result_user["time_step_var"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
-            min_periods=1).var()
+        if len(result_user) > 1:
+            result_user["time_step_mean"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).mean()
+            result_user["time_step_cv"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).std()
+            result_user["time_step_median"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).median()
+            result_user["time_step_min"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).min()
+            result_user["time_step_max"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).max()
+            result_user["time_step_var"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
+                min_periods=1).var()
+        else:
+            result_user["time_step_mean"] = 0
+            result_user["time_step_cv"] = 0
+            result_user["time_step_median"] = 0
+            result_user["time_step_min"] = 0
+            result_user["time_step_max"] = 0
+            result_user["time_step_var"] = 0
+
         result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
             ['numberOfActivations'], verify_integrity=True).sort_index()
         result_act["surface_mean"] = result_act["surface"].expanding(min_periods=1).mean()

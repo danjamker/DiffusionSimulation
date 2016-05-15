@@ -16,6 +16,7 @@ from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
 import json
+import numpy as np
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol

@@ -15,7 +15,6 @@ from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
-import json
 import numpy as np
 
 class MRJobNetworkX(MRJob):
@@ -29,11 +28,12 @@ class MRJobNetworkX(MRJob):
         self.add_passthrough_option('--limit', type='int', default=50, help='...')
 
     def mapper(self, _, line):
-        df = pd.read_json(json.loads(line)["raw"])
+
+        df = pd.read_json(line["raw"])
         df['time'] = pd.to_datetime(df['time'])
 
-        result_act = pd.read_json(json.loads(line)["result_act"])
-        result_user = pd.read_json(json.loads(line)["result_user"])
+        result_act = pd.read_json(line["result_act"])
+        result_user = pd.read_json(line["result_user"])
 
         if len(df.index) > self.options.limit:
             result_act_100, result_user_100 = self.generate_tables(df.loc[:self.options.limit])

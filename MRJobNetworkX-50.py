@@ -45,7 +45,7 @@ class MRJobNetworkX(MRJob):
             ray["word"] = [line["file"].split("/")[-1]]
             ruy["word"] = [line["file"].split("/")[-1]]
 
-            yield 50, {"name": line["file"].split("/")[-1],
+            yield 50, {"name": json.loads(line["name"]),
                             "result_user": ruy.to_json(),
                             "result_act": ray.to_json()}
 

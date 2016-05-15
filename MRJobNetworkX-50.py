@@ -15,7 +15,6 @@ from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
-import metrics
 import json
 
 class MRJobNetworkX(MRJob):
@@ -26,21 +25,6 @@ class MRJobNetworkX(MRJob):
         self.add_file_option('--network')
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
         self.add_passthrough_option('--limit', type='int', default=50, help='...')
-
-    def runCascade(self, C):
-        cas = C
-        idx = []
-        values = []
-        met = metrics.metric(cas.getGraph())
-        while True:
-            try:
-                cas.next()
-                met.add(cas.getInfectedNode())
-                values.append(met.asMap())
-                idx.append(cas.getStep())
-            except StopIteration:
-                break
-        return idx, values
 
     def mapper(self, _, line):
         df = pd.read_json(json.loads(line)["raw"])

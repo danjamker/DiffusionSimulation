@@ -29,6 +29,8 @@ class MRJobNetworkX(MRJob):
 
     def mapper(self, _, line):
         df = pd.read_json(json.loads(line)["raw"])
+        df['time'] = pd.to_datetime(df['time'])
+
         result_act = pd.read_json(json.loads(line)["result_act"])
         result_user = pd.read_json(json.loads(line)["result_user"])
 

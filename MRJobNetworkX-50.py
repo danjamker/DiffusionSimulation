@@ -92,6 +92,7 @@ class MRJobNetworkX(MRJob):
         result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).max()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).min()
         result_user["time_step"] = result_user["time"].diff()
+        print result_user["time_step"]
         result_user["time_step_mean"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
             min_periods=1).mean()
         result_user["time_step_cv"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(

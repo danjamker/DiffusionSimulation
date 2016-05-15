@@ -153,7 +153,7 @@ class MRJobNetworkX(MRJob):
     def steps(self):
         if self.options.avrage == 1:
             return [
-                MRStep(mapper_init=self.mapper_init,
+                MRStep(
                        mapper=self.mapper,
                        reducer=self.reducer
                        )

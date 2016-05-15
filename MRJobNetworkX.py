@@ -167,10 +167,10 @@ class MRJobNetworkX(MRJob):
                     result_act["time_step_var"] = (result_act["time_step"] / np.timedelta64(1, 's')).expanding(
                         min_periods=1).var()
 
-        yield "apple", {"file": line, "name": line.split("/")[-1],
-                        "result_user": result_user.to_json(),
-                        "result_act": result_act.to_json(),
-                        "raw": df.sort_index().reset_index().to_json()}
+                    yield "apple", {"file": line, "name": line.split("/")[-1],
+                                    "result_user": result_user.to_json(),
+                                    "result_act": result_act.to_json(),
+                                    "raw": df.sort_index().reset_index().to_json()}
 
     def combiner(self, key, values):
         r_u_l = None

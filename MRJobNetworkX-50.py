@@ -10,7 +10,6 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
-import networkx as nx
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
@@ -42,11 +41,6 @@ class MRJobNetworkX(MRJob):
             except StopIteration:
                 break
         return idx, values
-
-    def mapper_init(self):
-        self.G = nx.read_gpickle(self.options.network)
-        self.tmp = {node: 0 for node in self.G.nodes()}
-        nx.set_node_attributes(self.G, 'activated', self.tmp)
 
     def mapper(self, _, line):
         df = pd.read_json(json.loads(line)["raw"])

@@ -19,6 +19,7 @@ import json
 import numpy as np
 
 class MRJobNetworkX(MRJob):
+    INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
 
     def configure_options(self):
@@ -45,7 +46,7 @@ class MRJobNetworkX(MRJob):
             ray["word"] = [line["file"].split("/")[-1]]
             ruy["word"] = [line["file"].split("/")[-1]]
 
-            yield 50, {"name": json.loads(line["name"]),
+            yield 50, {"name": line["name"],
                             "result_user": ruy.to_json(),
                             "result_act": ray.to_json()}
 

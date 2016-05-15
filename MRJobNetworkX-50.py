@@ -17,7 +17,7 @@ from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 
 import metrics
-
+import json
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol

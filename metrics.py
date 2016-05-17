@@ -47,7 +47,10 @@ class metric:
         self.pagerank = 0
         self.degrees = 0
 
-    def add(self, n, step_time=None):
+        #Tag
+        self.tag = None
+
+    def add(self, n, step_time=None, tag=None):
         if n is not None:
             if self.G.has_node(n):
 
@@ -114,7 +117,7 @@ class metric:
                     self.surface_set.remove(n)
                 self.surface = len(self.surface_set)
                 self.surface_step.append(self.surface)
-
+                self.tag.append(tag)
 
 
     def asMap(self):
@@ -135,7 +138,8 @@ class metric:
                 "numberActivatedUsersnorm": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
-                "degree": self.degrees}
+                "degree": self.degrees,
+                "tag":self.tag}
 
     def to_JSON(self):
         return json.dumps(self.__dict__)

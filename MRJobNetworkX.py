@@ -18,10 +18,11 @@ import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
-
+from collections import Counter
 import cascade
 import metrics
 import numpy as np
+import scipy
 
 class MRJobNetworkX(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
@@ -51,6 +52,10 @@ class MRJobNetworkX(MRJob):
         self.tmp = {node: 0 for node in self.G.nodes()}
         nx.set_node_attributes(self.G, 'activated', self.tmp)
 
+    def entropy_compute(self,X):
+        #Add all the tags
+        return scipy.stats.entropy(pd.value_counts(X).reindex(["A"]).fillna(0).values)
+
     def mapper(self, _, line):
 
         nx.set_node_attributes(self.G, 'activated', self.tmp)
@@ -69,6 +74,9 @@ class MRJobNetworkX(MRJob):
 
                 idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
                 df = pd.DataFrame(values, index=idx).sort_index()
+
+                #compute the entropy of tags up to that point
+                df["tag_entropy"] = pd.expanding_apply(df["tag"].expanding(), self.entropy_compute)
 
                 #check to see if there is data within the dataframes.
                 if len(df.index) > 0:

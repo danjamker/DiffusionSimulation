@@ -11,3 +11,5 @@ jupyter
 ipython
 seaborn
 scikit-learn
+patsy
+statsmodels

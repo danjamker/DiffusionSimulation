@@ -54,7 +54,8 @@ class MRJobNetworkX(MRJob):
         result_user = pd.read_json(line["result_user"])
 
         if len(df.index) > self.options.limit:
-            for r in range(50, 55):
+            #Check to see if are enough records in the range.
+            for r in range(50, len(df)):
                 result_act_100, result_user_100 = self.generate_tables(df.loc[:r])
                 ruy = result_user_100.iloc[-1:]
                 ruy.index = [len(result_user.index)]

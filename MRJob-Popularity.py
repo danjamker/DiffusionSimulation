@@ -50,7 +50,7 @@ class MRJobPopularity(MRJob):
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
 
             dftt["activations"].mean()
-            yield d, {"timedelta": d,
+            yield None, {"timedelta": d,
                                 "popularity": dftt["activations"].mean(),
                                 "word": line["file"].split("/")[-1]}
     def reducer(self, key, values):

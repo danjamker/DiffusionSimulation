@@ -16,6 +16,15 @@ from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 import datetime
 
+
+def dt(X):
+    return datetime.datetime.fromtimestamp(float(X / 1000))
+
+
+def to_date(X):
+    return X.day()
+
+
 class MRJobPopularity(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
@@ -28,15 +37,7 @@ class MRJobPopularity(MRJob):
     def mapper(self, _, line):
 
         df = pd.read_json(line["raw"])
-
-        def dt(X):
-            return datetime.datetime.fromtimestamp(float(X / 1000))
-
         df['time'] = df['time'].apply(dt)
-
-        def to_date(X):
-            return X.day()
-
         dft = df.set_index(pd.DatetimeIndex(df['time']))
 
         for d in self.days:
@@ -49,9 +50,9 @@ class MRJobPopularity(MRJob):
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
 
             dftt["activations"].mean()
-            yield d, {"timedelta": d,
+            yield (d, {"timedelta": d,
                                 "result_user": dftt["activations"].mean(),
-                                "word": line["file"].split("/")[-1]}
+                                "word": line["file"].split("/")[-1]})
 
     def steps(self):
         return MRStep(

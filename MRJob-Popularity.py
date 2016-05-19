@@ -50,13 +50,20 @@ class MRJobPopularity(MRJob):
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
 
             dftt["activations"].mean()
-            yield (d, {"timedelta": d,
+            yield d, {"timedelta": d,
                                 "popularity": dftt["activations"].mean(),
-                                "word": line["file"].split("/")[-1]})
+                                "word": line["file"].split("/")[-1]}
+    def reducer(self, key, values):
+        d = []
+        for v in values:
+            d.append(v)
+
+        yield None, pd.DataFrame(d).to_json()
 
     def steps(self):
         return [MRStep(
-               mapper=self.mapper
+            mapper=self.mapper,
+            reducer=self.reducer
                )]
 
 

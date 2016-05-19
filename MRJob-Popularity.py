@@ -38,9 +38,9 @@ class MRJobPopularity(MRJob):
 
         df = pd.read_json(line["raw"])
         df['time'] = df['time'].apply(dt)
-        dft = df.set_index(pd.DatetimeIndex(df['time']))
 
         for d in self.days:
+            dft = df.set_index(pd.DatetimeIndex(df['time']))
             start = dft.index.searchsorted(dft.index[0])
             end = dft.index.searchsorted(dft.index[0] + datetime.timedelta(days=d))
             dft = dft.ix[start:end]
@@ -51,13 +51,13 @@ class MRJobPopularity(MRJob):
 
             dftt["activations"].mean()
             yield (d, {"timedelta": d,
-                                "result_user": dftt["activations"].mean(),
+                                "popularity": dftt["activations"].mean(),
                                 "word": line["file"].split("/")[-1]})
 
     def steps(self):
-        return MRStep(
+        return [MRStep(
                mapper=self.mapper
-               )
+               )]
 
 
 if __name__ == '__main__':

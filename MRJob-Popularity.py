@@ -49,7 +49,7 @@ class MRJobPopularity(MRJob):
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
 
             dftt["activations"].mean()
-            yield 50, {"timedelta": d,
+            yield d, {"timedelta": d,
                                 "result_user": dftt["activations"].mean(),
                                 "word": line["file"].split("/")[-1]}
 

@@ -54,7 +54,7 @@ class MRJobPopularity(MRJob):
                                 "word": line["file"].split("/")[-1]}
 
     def steps(self):
-        MRStep(
+        return MRStep(
                mapper=self.mapper,
                )
 

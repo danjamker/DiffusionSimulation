@@ -66,9 +66,6 @@ class MRJobNetworkX(MRJob):
                 ray["word"] = [line["file"].split("/")[-1]]
                 ruy["word"] = [line["file"].split("/")[-1]]
 
-
-                print r
-                print line["file"].split("/")[-1]
                 yield r, {"name": line["file"].split("/")[-1],
                                 "result_user": ruy.to_json(),
                                 "result_act": ray.to_json()}
@@ -179,6 +176,7 @@ class MRJobNetworkX(MRJob):
                     "r_a_l_results": r_a_l_results}
 
     def liniar_regression(self, df, features = [], test_size = 0.33, random_state = 5):
+
         X_train, X_test, Y_train, Y_test = sklearn.cross_validation.train_test_split(df[features],
                                                                                      df["depth"],
                                                                                      test_size=test_size, random_state=random_state)

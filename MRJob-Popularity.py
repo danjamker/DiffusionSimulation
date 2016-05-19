@@ -27,7 +27,7 @@ class MRJobPopularity(MRJob):
 
     def mapper(self, _, line):
 
-        df = pd.read_json(line["raw"]).sort_index()
+        df = pd.read_json(line["raw"])
 
         def dt(X):
             return datetime.datetime.fromtimestamp(float(X / 1000))

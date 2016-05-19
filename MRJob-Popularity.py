@@ -38,21 +38,26 @@ class MRJobPopularity(MRJob):
 
         df = pd.read_json(line["raw"])
         df['time'] = df['time'].apply(dt)
+        df = df.sort(["time"])
 
         for d in self.days:
             dft = df.set_index(pd.DatetimeIndex(df['time']))
+
             start = dft.index.searchsorted(dft.index[0])
             end = dft.index.searchsorted(dft.index[0] + datetime.timedelta(days=d))
             dft = dft.ix[start:end]
             dftt = pd.DataFrame(index=dft.index)
-            dftt["activations"] = 1
-            dftt = dftt.resample('d', how='sum').fillna(0)
-            dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
 
-            dftt["activations"].mean()
+            dftt["activations"] = 1
+            dftt = dftt.resample('d').sum().fillna(0)
+            idx = pd.date_range(dftt.index[0], dftt.index[0] + datetime.timedelta(days=d))
+            dftt = dftt.reindex(idx, fill_value=0)
+            dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
             yield None, {"timedelta": d,
                                 "popularity": dftt["activations"].mean(),
+                                "activations": dftt["activations"].to_json(),
                                 "word": line["file"].split("/")[-1]}
+
     def reducer(self, key, values):
         d = []
         for v in values:

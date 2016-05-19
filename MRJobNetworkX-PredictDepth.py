@@ -10,7 +10,6 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
-import networkx as nx
 import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
@@ -21,15 +20,24 @@ import numpy as np
 
 import sklearn
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 
 class MRJobNetworkX(MRJob):
+
     OUTPUT_PROTOCOL = JSONValueProtocol
     INPUT_PROTOCOL = JSONValueProtocol
 
+    combinations = {
+        "time":["time_step_mean","time_step_cv"],
+        "basic":["surface","numberActivatedUsersnorm"],
+        "community":["inffectedCommunitiesnor","usageEntorpy","userUsageEntorpy"],
+        "exposure":["UserExposure_mean", "ActivateionExposure_mean"],
+        "all":["time_step_mean","time_step_cv","surface","numberActivatedUsersnorm","inffectedCommunitiesnor","usageEntorpy","userUsageEntorpy"]
+    }
+
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
-        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
-        self.add_passthrough_option('--limit', type='int', default=50, help='...')
+        self.add_passthrough_option('--lower_limit', type='int', default=50, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -53,7 +61,7 @@ class MRJobNetworkX(MRJob):
         result_act = pd.read_json(line["result_act"])
         result_user = pd.read_json(line["result_user"])
 
-        if len(df.index) > self.options.limit:
+        if len(df.index) > self.options.lower_limit:
             #Check to see if are enough records in the range.
             for r in range(50, len(df)):
                 result_act_100, result_user_100 = self.generate_tables(df.loc[:r])
@@ -88,6 +96,20 @@ class MRJobNetworkX(MRJob):
         result_user["UserExposure_median"] = result_user["UserExposure"].expanding(min_periods=1).median()
         result_user["UserExposure_min"] = result_user["UserExposure"].expanding(min_periods=1).max()
         result_user["UserExposure_mean"] = result_user["UserExposure"].expanding(min_periods=1).min()
+        result_user["ActivateionExposure_mean"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).mean()
+        result_user["ActivateionExposure_cv"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).std()
+        result_user["ActivateionExposure_var"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).var()
+        result_user["ActivateionExposure_var"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).var()
+        result_user["ActivateionExposure_median"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).median()
+        result_user["ActivateionExposure_max"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).max()
+        result_user["ActivateionExposure_min"] = result_user["ActivateionExposure"].expanding(
+            min_periods=1).min()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()
         result_user["pagerank_var"] = result_user["pagerank"].expanding(min_periods=1).var()
@@ -107,6 +129,7 @@ class MRJobNetworkX(MRJob):
             min_periods=1).max()
         result_user["time_step_var"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
             min_periods=1).var()
+
         result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
             ['numberOfActivations'], verify_integrity=True).sort_index()
         result_act["surface_mean"] = result_act["surface"].expanding(min_periods=1).mean()
@@ -132,6 +155,12 @@ class MRJobNetworkX(MRJob):
             min_periods=1).max()
         result_act["ActivateionExposure_min"] = result_act["ActivateionExposure"].expanding(
             min_periods=1).min()
+        result_act["UserExposure_mean"] = result_act["UserExposure"].expanding(min_periods=1).mean()
+        result_act["UserExposure_cv"] = result_act["UserExposure"].expanding(min_periods=1).std()
+        result_act["UserExposure_var"] = result_act["UserExposure"].expanding(min_periods=1).var()
+        result_act["UserExposure_median"] = result_act["UserExposure"].expanding(min_periods=1).median()
+        result_act["UserExposure_min"] = result_act["UserExposure"].expanding(min_periods=1).max()
+        result_act["UserExposure_mean"] = result_act["UserExposure"].expanding(min_periods=1).min()
         result_act["pagerank_mean"] = result_act["pagerank"].expanding(min_periods=1).mean()
         result_act["pagerank_cv"] = result_act["pagerank"].expanding(min_periods=1).std()
         result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
@@ -156,8 +185,6 @@ class MRJobNetworkX(MRJob):
 
     def reducer(self, key, values):
 
-        features = ["time_step_mean"]
-
         r_u_l = None
         r_a_l = None
         for v in values:
@@ -168,23 +195,23 @@ class MRJobNetworkX(MRJob):
                 r_u_l = pd.concat((r_u_l, pd.read_json(v["result_user"])))
                 r_a_l = pd.concat((r_a_l, pd.read_json(v["result_act"])))
 
-        r_u_l_results = self.liniar_regression(r_u_l, features=features)
-        r_a_l_results = self.liniar_regression(r_a_l, features=features)
+        if len(r_a_l) > 1:
+            for k, v in self.combinations.iteritems():
+                # r_u_l_results = self.liniar_regression(r_u_l, features=v)
+                r_a_l_results = self.liniar_regression(r_a_l, features=v)
 
+                yield None, {"observation_level": key, "r_u_l_results": "",
+                        "r_a_l_results": r_a_l_results, "combination":k}
 
-        yield key, {"observation_level": key, "r_u_l_results": r_u_l_results,
-                    "r_a_l_results": r_a_l_results}
-
-    def liniar_regression(self, df, features = [], test_size = 0.33, random_state = 5):
-
+    def liniar_regression(self, df, features = [], test_size = 0.20, random_state = 0):
         X_train, X_test, Y_train, Y_test = sklearn.cross_validation.train_test_split(df[features],
                                                                                      df["depth"],
                                                                                      test_size=test_size, random_state=random_state)
         lm = LinearRegression()
         lm.fit(X_train, Y_train)
 
-        mse_y_train = np.mean((Y_train - lm.predict(X_train)) ** 2)
-        mse_x_y_test = np.mean((Y_test - lm.predict(X_test)) ** 2)
+        mse_y_train = mean_squared_error(Y_train, lm.predict(X_train))
+        mse_x_y_test = mean_squared_error(Y_test, lm.predict(X_test))
 
         return mse_x_y_test, mse_y_train
 

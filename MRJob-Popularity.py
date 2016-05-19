@@ -55,7 +55,7 @@ class MRJobPopularity(MRJob):
 
     def steps(self):
         return MRStep(
-               mapper=self.mapper,
+               mapper=self.mapper
                )
 
 

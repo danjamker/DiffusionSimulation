@@ -79,8 +79,8 @@ class MRJobPopularity(MRJob):
             if df is None:
                 df = pd.read_json(v["activations"]).reset_index()
             else:
-                pd.concat((df, pd.read_json(v["activations"]))).reset_index()
-        print df.head()
+                pd.concat((df, pd.read_json(v["activations"]).reset_index()))
+
         yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
 
     def steps(self):

@@ -60,10 +60,9 @@ class MRJobPopularity(MRJob):
                                     "activations": dftt["activations"].to_json(),
                                     "word": line["file"].split("/")[-1]}
             else:
-                print d
                 yield d, {"timedelta": d,
                              "popularity": dftt["activations"].mean(),
-                             "activations": dftt.to_json(),
+                             "activations": dftt.reset_index().to_json(),
                              "word": line["file"].split("/")[-1]}
 
     def reducer(self, key, values):
@@ -77,9 +76,9 @@ class MRJobPopularity(MRJob):
         df = None
         for v in values:
             if df is None:
-                df = pd.read_json(v["activations"]).reset_index()
+                df = pd.read_json(v["activations"])
             else:
-                pd.concat((df, pd.read_json(v["activations"]).reset_index()))
+                pd.concat((df, pd.read_json(v["activations"])))
 
         yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
 

@@ -63,20 +63,21 @@ class MRJobNetworkX(MRJob):
 
         if len(df.index) > self.options.lower_limit:
             #Check to see if are enough records in the range.
-            for r in range(50, len(df)):
-                result_act_100, result_user_100 = self.generate_tables(df.loc[:r])
-                ruy = result_user_100.iloc[-1:]
-                ruy.index = [len(result_user.index)]
-                ray = result_act_100.iloc[-1:]
-                ray.index = [len(result_act.index)]
-                ray["depth"] = [len(result_act.index)]
-                ruy["depth"] = [len(result_user.index)]
-                ray["word"] = [line["file"].split("/")[-1]]
-                ruy["word"] = [line["file"].split("/")[-1]]
+            for z in range(2, len(df)-2):
+                for r in range(2, len(df)):
+                    result_act_100, result_user_100 = self.generate_tables(df.loc[:r])
+                    ruy = result_user_100.iloc[-1:]
+                    ruy.index = [len(result_user.index)]
+                    ray = result_act_100.iloc[-1:]
+                    ray.index = [len(result_act.index)]
+                    ray["depth"] = [len(result_act.index)]
+                    ruy["depth"] = [len(result_user.index)]
+                    ray["word"] = [line["file"].split("/")[-1]]
+                    ruy["word"] = [line["file"].split("/")[-1]]
 
-                yield r, {"name": line["file"].split("/")[-1],
-                                "result_user": ruy.to_json(),
-                                "result_act": ray.to_json()}
+                    yield r, {"name": line["file"].split("/")[-1],
+                                    "result_user": ruy.to_json(),
+                                    "result_act": ray.to_json()}
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(

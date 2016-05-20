@@ -81,7 +81,7 @@ class MRJobPopularity(MRJob):
             else:
                 pd.concat((df, pd.read_json(v["activations"])))
 
-        yield key, {"D":key, "vales":df.groupby(df["date"]).mean().to_json()}
+        yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
 
     def steps(self):
         if self.options.avrage == 1:

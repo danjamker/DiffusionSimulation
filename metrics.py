@@ -82,22 +82,14 @@ class metric:
                         self.early_spread_time = self.sequence_time[-1] - self.sequence_time[0]
 
 
-                dominatcommunity = max(self.activationsPerCommunity.iteritems(), key=operator.itemgetter(1))[0]
-                self.usagedominance = np.float64(
-                    self.activationsPerCommunity[dominatcommunity]) / self.numberOfActivations
-
-
-                dominatcommunity = max(self.activatedUsersPerCommunity.iteritems(), key=operator.itemgetter(1))[0]
-                self.userUsageDominance = np.float64(self.activatedUsersPerCommunity[
-                                                         dominatcommunity]) / self.numberActivatedUsers
-
+                norm_activationsPerCommunity = [np.float64(self.activationsPerCommunity[c]) / self.numberOfActivations for c in self.Communities]
+                self.usagedominance = max(norm_activationsPerCommunity)
+                norm_activatedUsersPerCommunity = [np.float64(self.activatedUsersPerCommunity[c]) / self.numberActivatedUsers for c in self.Communities]
+                self.userUsageDominance = max(norm_activatedUsersPerCommunity)
 
                 # Shouldnt this be a list of number of the number of times a users has used an activation
-                self.usageEntorpy = scipy.stats.entropy(
-                    [self.activationsPerCommunity[c] for c in self.Communities])
-
-                self.userUsageEntorpy = scipy.stats.entropy(
-                    [self.activatedUsersPerCommunity[c] for c in self.Communities])
+                self.usageEntorpy = scipy.stats.entropy(norm_activationsPerCommunity)
+                self.userUsageEntorpy = scipy.stats.entropy(norm_activatedUsersPerCommunity)
 
                 #Compute Activations
                 exposures = [self.G.node[ns]['activated'] for ns in self.G.neighbors(n) if

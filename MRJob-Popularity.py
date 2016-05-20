@@ -33,6 +33,7 @@ class MRJobPopularity(MRJob):
 
     def configure_options(self):
         super(MRJobPopularity, self).configure_options()
+        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
 
     def mapper(self, _, line):
 
@@ -53,10 +54,17 @@ class MRJobPopularity(MRJob):
             idx = pd.date_range(dftt.index[0], dftt.index[0] + datetime.timedelta(days=d))
             dftt = dftt.reindex(idx, fill_value=0)
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
-            yield None, {"timedelta": d,
-                                "popularity": dftt["activations"].mean(),
-                                "activations": dftt["activations"].to_json(),
-                                "word": line["file"].split("/")[-1]}
+            if self.options.avrage == 1:
+                yield None, {"timedelta": d,
+                                    "popularity": dftt["activations"].mean(),
+                                    "activations": dftt["activations"].to_json(),
+                                    "word": line["file"].split("/")[-1]}
+            else:
+                print d
+                yield d, {"timedelta": d,
+                             "popularity": dftt["activations"].mean(),
+                             "activations": dftt.to_json(),
+                             "word": line["file"].split("/")[-1]}
 
     def reducer(self, key, values):
         d = []
@@ -65,11 +73,27 @@ class MRJobPopularity(MRJob):
 
         yield None, pd.DataFrame(d).to_json()
 
+    def reducer_2(self, key, values):
+        df = None
+        for v in values:
+            if df is None:
+                df = pd.read_json(v["activations"]).reset_index()
+            else:
+                pd.concat((df, pd.read_json(v["activations"]))).reset_index()
+        print df.head()
+        yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
+
     def steps(self):
-        return [MRStep(
-            mapper=self.mapper,
-            reducer=self.reducer
-               )]
+        if self.options.avrage == 1:
+            return [MRStep(
+                mapper=self.mapper,
+                reducer=self.reducer
+                   )]
+        else:
+            return [MRStep(
+                mapper=self.mapper,
+                reducer=self.reducer_2
+                   )]
 
 
 if __name__ == '__main__':

@@ -20,6 +20,11 @@ import datetime
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
 
+
+def to_date(X):
+    return X.day()
+
+
 class MRJobPopularityRaw(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
@@ -35,15 +40,12 @@ class MRJobPopularityRaw(MRJob):
         df = pd.read_json(line["raw"])
         df['time'] = df['time'].apply(dt)
         df = df.sort(["time"])
+        df = df.resample('d').max().fillna(0)
+        idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=30))
+        df = df.reindex(idx, fill_value=0)
 
-        dft = df.set_index(pd.DatetimeIndex(df['time']))
-        dft = dft.resample('d').max()
-        idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=self.days[-1]))
-        dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
-
-        for k, v in dft.reset_index().ix[self.days].iterrows():
-            yield None, {"numberActivatedUsers": v["numberActivatedUsers"],
-                                "numberOfActivations": v["numberOfActivations"],
+        for k, v in dftt.reset_index().ix[self.days].iterrows():
+            yield None, {"activation": v["activations"],
                                 "word": line["file"].split("/")[-1],
                                 "period": k}
 

@@ -54,6 +54,7 @@ class MRJobPopularity(MRJob):
             idx = pd.date_range(dftt.index[0], dftt.index[0] + datetime.timedelta(days=d))
             dftt = dftt.reindex(idx, fill_value=0)
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
+            dftt.index.name = 'date'
             if self.options.avrage == 1:
                 yield None, {"timedelta": d,
                                     "popularity": dftt["activations"].mean(),
@@ -80,7 +81,7 @@ class MRJobPopularity(MRJob):
             else:
                 pd.concat((df, pd.read_json(v["activations"])))
 
-        yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
+        yield key, {"D":key, "vales":df.groupby(df["date"]).mean().to_json()}
 
     def steps(self):
         if self.options.avrage == 1:

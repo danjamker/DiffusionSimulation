@@ -79,7 +79,7 @@ class MRJobPopularity(MRJob):
             if df is None:
                 df = pd.read_json(v["activations"])
             else:
-                pd.concat((df, pd.read_json(v["activations"])))
+                df = pd.concat((df, pd.read_json(v["activations"])))
 
         yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
 

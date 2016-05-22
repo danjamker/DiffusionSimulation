@@ -34,7 +34,6 @@ class MRJobPopularityRaw(MRJob):
 
         df = pd.read_json(line["raw"])
         df['time'] = df['time'].apply(dt)
-        df = df.sort(["time"])
 
         dft = df.set_index(pd.DatetimeIndex(df['time']))
         dft = dft.resample('d').max()

@@ -86,14 +86,14 @@ class MRJobNetworkX(MRJob):
         result_user["UserExposure_cv"] = result_user["UserExposure"].expanding(min_periods=1).std()
         result_user["UserExposure_var"] = result_user["UserExposure"].expanding(min_periods=1).var()
         result_user["UserExposure_median"] = result_user["UserExposure"].expanding(min_periods=1).median()
-        result_user["UserExposure_min"] = result_user["UserExposure"].expanding(min_periods=1).max()
-        result_user["UserExposure_mean"] = result_user["UserExposure"].expanding(min_periods=1).min()
+        result_user["UserExposure_max"] = result_user["UserExposure"].expanding(min_periods=1).max()
+        result_user["UserExposure_min"] = result_user["UserExposure"].expanding(min_periods=1).min()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()
         result_user["pagerank_var"] = result_user["pagerank"].expanding(min_periods=1).var()
         result_user["pagerank_median"] = result_user["pagerank"].expanding(min_periods=1).median()
-        result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).max()
-        result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).min()
+        result_user["pagerank_max"] = result_user["pagerank"].expanding(min_periods=1).max()
+        result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).min()
         result_user["time_step"] = result_user["time"].diff()
         if len(result_user) > 1:
             result_user["time_step_mean"] = (result_user["time_step"] / np.timedelta64(1, 's')).expanding(
@@ -133,8 +133,6 @@ class MRJobNetworkX(MRJob):
             min_periods=1).std()
         result_act["ActivateionExposure_var"] = result_act["ActivateionExposure"].expanding(
             min_periods=1).var()
-        result_act["ActivateionExposure_var"] = result_act["ActivateionExposure"].expanding(
-            min_periods=1).var()
         result_act["ActivateionExposure_median"] = result_act["ActivateionExposure"].expanding(
             min_periods=1).median()
         result_act["ActivateionExposure_max"] = result_act["ActivateionExposure"].expanding(
@@ -143,7 +141,6 @@ class MRJobNetworkX(MRJob):
             min_periods=1).min()
         result_act["pagerank_mean"] = result_act["pagerank"].expanding(min_periods=1).mean()
         result_act["pagerank_cv"] = result_act["pagerank"].expanding(min_periods=1).std()
-        result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
         result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
         result_act["pagerank_median"] = result_act["pagerank"].expanding(min_periods=1).median()
         result_act["pagerank_max"] = result_act["pagerank"].expanding(min_periods=1).max()

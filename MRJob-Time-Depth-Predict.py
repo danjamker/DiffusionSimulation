@@ -37,10 +37,10 @@ class MRJobPopularityRaw(MRJob):
 
     combinations = {
         "time":["time_step_mean","time_step_cv"],
-        "basic":["surface","numberActivatedUsersnorm"],
-        "community":["inffectedCommunitiesnor","usageEntorpy","userUsageEntorpy"],
-        "exposure":["UserExposure_mean", "ActivateionExposure_mean"],
-        "all":["time_step_mean","time_step_cv","surface","numberActivatedUsersnorm","inffectedCommunitiesnor","usageEntorpy","userUsageEntorpy"]
+        "basic":["surface","number_activated_users_normalised"],
+        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy"],
+        "exposure":["user_exposure_mean", "activateion_exposure_mean"],
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users_normalised","inffected_communities_normalised","user_usage_entorpy","activation_entorpy"]
     }
 
     target = ["user_target","activation_target"]
@@ -84,8 +84,8 @@ class MRJobPopularityRaw(MRJob):
                     yield None, {"observation_level": key, "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t}
 
     def generate_tables(self, df):
-        result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
-            ['numberActivatedUsers'], verify_integrity=True, drop=False).sort_index()
+        result_user = df.drop_duplicates(subset='number_activated_users', keep='first').set_index(
+            ['number_activated_users'], verify_integrity=True, drop=False).sort_index()
         result_user["surface_mean"] = result_user["surface"].expanding(min_periods=1).mean()
         result_user["surface_cv"] = result_user["surface"].expanding(min_periods=1).std()
         result_user["surface_var"] = result_user["surface"].expanding(min_periods=1).var()
@@ -95,25 +95,25 @@ class MRJobPopularityRaw(MRJob):
         result_user["degree_var"] = result_user["degree"].expanding(min_periods=1).var()
         result_user["degree_max"] = result_user["degree"].expanding(min_periods=1).max()
         result_user["degree_min"] = result_user["degree"].expanding(min_periods=1).min()
-        result_user["UserExposure_mean"] = result_user["UserExposure"].expanding(min_periods=1).mean()
-        result_user["UserExposure_cv"] = result_user["UserExposure"].expanding(min_periods=1).std()
-        result_user["UserExposure_var"] = result_user["UserExposure"].expanding(min_periods=1).var()
-        result_user["UserExposure_median"] = result_user["UserExposure"].expanding(min_periods=1).median()
-        result_user["UserExposure_min"] = result_user["UserExposure"].expanding(min_periods=1).max()
-        result_user["UserExposure_mean"] = result_user["UserExposure"].expanding(min_periods=1).min()
-        result_user["ActivateionExposure_mean"] = result_user["ActivateionExposure"].expanding(
+        result_user["user_exposure_mean"] = result_user["user_exposure"].expanding(min_periods=1).mean()
+        result_user["user_exposure_cv"] = result_user["user_exposure"].expanding(min_periods=1).std()
+        result_user["user_exposure_var"] = result_user["user_exposure"].expanding(min_periods=1).var()
+        result_user["user_exposure_median"] = result_user["user_exposure"].expanding(min_periods=1).median()
+        result_user["user_exposure_min"] = result_user["user_exposure"].expanding(min_periods=1).max()
+        result_user["user_exposure_mean"] = result_user["user_exposure"].expanding(min_periods=1).min()
+        result_user["ActivateionExposure_mean"] = result_user["activateion_exposure"].expanding(
             min_periods=1).mean()
-        result_user["ActivateionExposure_cv"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_cv"] = result_user["activateion_exposure"].expanding(
             min_periods=1).std()
-        result_user["ActivateionExposure_var"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_var"] = result_user["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_user["ActivateionExposure_var"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_var"] = result_user["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_user["ActivateionExposure_median"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_median"] = result_user["activateion_exposure"].expanding(
             min_periods=1).median()
-        result_user["ActivateionExposure_max"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_max"] = result_user["activateion_exposure"].expanding(
             min_periods=1).max()
-        result_user["ActivateionExposure_min"] = result_user["ActivateionExposure"].expanding(
+        result_user["ActivateionExposure_min"] = result_user["activateion_exposure"].expanding(
             min_periods=1).min()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()
@@ -135,8 +135,8 @@ class MRJobPopularityRaw(MRJob):
         result_user["time_step_var"] = (result_user["time_step"]).expanding(
             min_periods=1).var()
 
-        result_act = df.drop_duplicates(subset='numberOfActivations', keep='first').set_index(
-            ['numberOfActivations'], verify_integrity=True, drop=False).sort_index()
+        result_act = df.drop_duplicates(subset='number_activations', keep='first').set_index(
+            ['number_activations'], verify_integrity=True, drop=False).sort_index()
         result_act["surface_mean"] = result_act["surface"].expanding(min_periods=1).mean()
         result_act["surface_cv"] = result_act["surface"].expanding(min_periods=1).std()
         result_act["surface_var"] = result_act["surface"].expanding(min_periods=1).var()
@@ -146,26 +146,26 @@ class MRJobPopularityRaw(MRJob):
         result_act["degree_var"] = result_act["degree"].expanding(min_periods=1).var()
         result_act["degree_max"] = result_act["degree"].expanding(min_periods=1).max()
         result_act["degree_min"] = result_act["degree"].expanding(min_periods=1).min()
-        result_act["ActivateionExposure_mean"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_mean"] = result_act["activateion_exposure"].expanding(
             min_periods=1).mean()
-        result_act["ActivateionExposure_cv"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_cv"] = result_act["activateion_exposure"].expanding(
             min_periods=1).std()
-        result_act["ActivateionExposure_var"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_var"] = result_act["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_act["ActivateionExposure_var"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_var"] = result_act["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_act["ActivateionExposure_median"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_median"] = result_act["activateion_exposure"].expanding(
             min_periods=1).median()
-        result_act["ActivateionExposure_max"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_max"] = result_act["activateion_exposure"].expanding(
             min_periods=1).max()
-        result_act["ActivateionExposure_min"] = result_act["ActivateionExposure"].expanding(
+        result_act["activateion_exposure_min"] = result_act["activateion_exposure"].expanding(
             min_periods=1).min()
-        result_act["UserExposure_mean"] = result_act["UserExposure"].expanding(min_periods=1).mean()
-        result_act["UserExposure_cv"] = result_act["UserExposure"].expanding(min_periods=1).std()
-        result_act["UserExposure_var"] = result_act["UserExposure"].expanding(min_periods=1).var()
-        result_act["UserExposure_median"] = result_act["UserExposure"].expanding(min_periods=1).median()
-        result_act["UserExposure_min"] = result_act["UserExposure"].expanding(min_periods=1).max()
-        result_act["UserExposure_mean"] = result_act["UserExposure"].expanding(min_periods=1).min()
+        result_act["user_exposure_mean"] = result_act["user_exposure"].expanding(min_periods=1).mean()
+        result_act["user_exposure_cv"] = result_act["user_exposure"].expanding(min_periods=1).std()
+        result_act["user_exposure_var"] = result_act["user_exposure"].expanding(min_periods=1).var()
+        result_act["user_exposure_median"] = result_act["user_exposure"].expanding(min_periods=1).median()
+        result_act["user_exposure_min"] = result_act["user_exposure"].expanding(min_periods=1).max()
+        result_act["user_exposure_mean"] = result_act["user_exposure"].expanding(min_periods=1).min()
         result_act["pagerank_mean"] = result_act["pagerank"].expanding(min_periods=1).mean()
         result_act["pagerank_cv"] = result_act["pagerank"].expanding(min_periods=1).std()
         result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
@@ -189,7 +189,7 @@ class MRJobPopularityRaw(MRJob):
         return result_act, result_user
 
 
-    def liniar_regression(self, df, features = [], target = "" , nfolds = 100):
+    def liniar_regression(self, df, features = [], target = "" , nfolds = 15):
         kf = KFold(len(df), n_folds=nfolds, shuffle=True)
         results_array = []
         for train_index, test_index in kf:

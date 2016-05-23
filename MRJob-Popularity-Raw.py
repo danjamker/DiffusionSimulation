@@ -28,7 +28,6 @@ class MRJobPopularityRaw(MRJob):
 
     def configure_options(self):
         super(MRJobPopularityRaw, self).configure_options()
-        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
 
     def mapper(self, _, line):
 
@@ -41,8 +40,8 @@ class MRJobPopularityRaw(MRJob):
         dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
         for k, v in dft.reset_index().ix[self.days].iterrows():
-            yield None, {"numberActivatedUsers": v["numberActivatedUsers"],
-                                "numberOfActivations": v["numberOfActivations"],
+            yield None, {"number_activated_users": v["number_activated_users"],
+                                "number_activations": v["number_activations"],
                                 "word": line["file"].split("/")[-1],
                                 "period": k}
 

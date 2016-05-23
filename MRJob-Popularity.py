@@ -42,29 +42,36 @@ class MRJobPopularity(MRJob):
         df = df.sort(["time"])
 
         for d in self.days:
+
+            dft = df.set_index(pd.DatetimeIndex(df['time']))
+            dft = dft.resample('d').max()
+            idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=d))
+            dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
+
+
             dft = df.set_index(pd.DatetimeIndex(df['time']))
 
             start = dft.index.searchsorted(dft.index[0])
             end = dft.index.searchsorted(dft.index[0] + datetime.timedelta(days=d))
             dft = dft.ix[start:end]
-            dftt = pd.DataFrame(index=dft.index)
 
-            dftt["activations"] = 1
-            dftt = dftt.resample('d').sum().fillna(0)
-            idx = pd.date_range(dftt.index[0], dftt.index[0] + datetime.timedelta(days=d))
-            dftt = dftt.reindex(idx, fill_value=0)
-            dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
-            dftt.index.name = 'date'
+            dft["user_popularity"] = (dft["number_activated_users"]/ dft["number_activated_users"].sum())
+            dft["popularity"] = (dft["number_activations"]/ dft["number_activations"].sum())
+
             if self.options.avrage == 0:
                 yield None, {"timedelta": d,
-                                    "popularity": dftt["activations"].mean(),
-                                    "activations": dftt["activations"].to_json(),
+                                    "popularity": dft["popularity"].mean(),
+                                    "popularity_json": dft["popularity"].to_json(),
+                                    "user_popularity": dft["user_popularity"].mean(),
+                                    "user_popularity_json": dft["user_popularity"].to_json(),
                                     "word": line["file"].split("/")[-1]}
             else:
                 yield d, {"timedelta": d,
-                             "popularity": dftt["activations"].mean(),
-                             "activations": dftt.reset_index().to_json(),
-                             "word": line["file"].split("/")[-1]}
+                          "popularity": dft["popularity"].mean(),
+                          "popularity_json": dft["popularity"].to_json(),
+                          "user_popularity": dft["user_popularity"].mean(),
+                          "user_popularity_json": dft["user_popularity"].to_json(),
+                          "word": line["file"].split("/")[-1]}
 
     def reducer(self, key, values):
         d = []
@@ -74,14 +81,17 @@ class MRJobPopularity(MRJob):
         yield None, pd.DataFrame(d).to_json()
 
     def reducer_2(self, key, values):
-        df = None
+        df_popularity = None
+        df_user_popularity = None
         for v in values:
-            if df is None:
-                df = pd.read_json(v["activations"])
+            if df_popularity is None:
+                df_popularity = pd.read_json(v["popularity"])
+                df_user_popularity = pd.read_json(v["user_popularity"])
             else:
-                df = pd.concat((df, pd.read_json(v["activations"])))
+                df_popularity = pd.concat((df_popularity, pd.read_json(v["popularity"])))
+                df_user_popularity = pd.concat((df_user_popularity, pd.read_json(v["user_popularity"])))
 
-        yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
+        yield key, {"period":key, "popularity":df_popularity.groupby(df_popularity.index).mean().to_json(), "user_popularity":df_user_popularity.groupby(df_user_popularity.index).mean().to_json()}
 
     def steps(self):
         if self.options.avrage == 0:

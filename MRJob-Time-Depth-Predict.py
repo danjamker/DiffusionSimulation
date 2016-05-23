@@ -79,8 +79,12 @@ class MRJobPopularityRaw(MRJob):
         if len(df) > 1:
             for k, v in self.combinations.iteritems():
                 for t in self.target:
-                    df_results = self.liniar_regression(df.fillna(0), features=v, target=t)
-                    yield None, {"observation_level": key, "results_test": df_results[0],  "results_train": df_results[1], "combination":k, "target":t}
+                    #TODO loop over this 10 times to calculate the mean and variance.
+                    results_array = []
+                    for x in range(0,10):
+                        results_array.append(self.liniar_regression(df.fillna(0), features=v, target=t)[1])
+
+                    yield None, {"observation_level": key, "result_mean": np.mean(results_array),  "results_var": np.var(results_array), "combination":k, "target":t}
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
@@ -193,13 +197,13 @@ class MRJobPopularityRaw(MRJob):
                                                                                      df[target],
                                                                                      test_size=test_size, random_state=random_state)
 
-        lm = LinearRegression()
+        lm = LinearRegression(normalize=True)
         lm.fit(X_train, Y_train)
 
-        mse_y_train = mean_squared_error(Y_train, lm.predict(X_train))
-        mse_x_y_test = mean_squared_error(Y_test, lm.predict(X_test))
+        mse_train = mean_squared_error(Y_train, lm.predict(X_train))
+        mse_test = mean_squared_error(Y_test, lm.predict(X_test))
 
-        return mse_x_y_test, mse_y_train
+        return mse_train, mse_test
 
 
     def steps(self):

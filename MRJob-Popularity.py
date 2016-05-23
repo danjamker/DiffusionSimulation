@@ -55,7 +55,7 @@ class MRJobPopularity(MRJob):
             dftt = dftt.reindex(idx, fill_value=0)
             dftt["activations"] = (dftt["activations"].cumsum() / dftt["activations"].sum())
             dftt.index.name = 'date'
-            if self.options.avrage == 1:
+            if self.options.avrage == 0:
                 yield None, {"timedelta": d,
                                     "popularity": dftt["activations"].mean(),
                                     "activations": dftt["activations"].to_json(),
@@ -84,7 +84,7 @@ class MRJobPopularity(MRJob):
         yield key, {"D":key, "vales":df.groupby(df.index).mean().to_json()}
 
     def steps(self):
-        if self.options.avrage == 1:
+        if self.options.avrage == 0:
             return [MRStep(
                 mapper=self.mapper,
                 reducer=self.reducer

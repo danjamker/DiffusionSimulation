@@ -20,7 +20,7 @@ import sklearn
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-
+from sklearn.cross_validation import KFold
 
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
@@ -79,12 +79,9 @@ class MRJobPopularityRaw(MRJob):
         if len(df) > 1:
             for k, v in self.combinations.iteritems():
                 for t in self.target:
-                    #TODO loop over this 10 times to calculate the mean and variance.
-                    results_array = []
-                    for x in range(0,10):
-                        results_array.append(self.liniar_regression(df.fillna(0), features=v, target=t)[1])
+                    r = self.liniar_regression(df.fillna(0), features=v, target=t)
 
-                    yield None, {"observation_level": key, "result_mean": np.mean(results_array),  "results_var": np.var(results_array), "combination":k, "target":t}
+                    yield None, {"observation_level": key, "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t}
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='numberActivatedUsers', keep='first').set_index(
@@ -192,18 +189,19 @@ class MRJobPopularityRaw(MRJob):
         return result_act, result_user
 
 
-    def liniar_regression(self, df, features = [], target = "" ,test_size = 0.20, random_state = 0):
-        X_train, X_test, Y_train, Y_test = sklearn.cross_validation.train_test_split(df[features],
-                                                                                     df[target],
-                                                                                     test_size=test_size, random_state=random_state)
+    def liniar_regression(self, df, features = [], target = "" , nfolds = 100):
+        kf = KFold(len(df), n_folds=nfolds, shuffle=True)
+        results_array = []
+        for train_index, test_index in kf:
+            X_train, X_test = df.ix[train_index, features], df.ix[test_index, features]
+            Y_train, Y_test = df.ix[train_index, target], df.ix[test_index, target]
 
-        lm = LinearRegression(normalize=True)
-        lm.fit(X_train, Y_train)
+            lm = LinearRegression(normalize=True)
+            lm.fit(X_train, Y_train)
 
-        mse_train = mean_squared_error(Y_train, lm.predict(X_train))
-        mse_test = mean_squared_error(Y_test, lm.predict(X_test))
+            results_array.append(mean_squared_error(Y_test, lm.predict(X_test)))
 
-        return mse_train, mse_test
+        return np.mean(results_array), np.var(results_array)
 
 
     def steps(self):

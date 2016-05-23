@@ -13,3 +13,4 @@ seaborn
 scikit-learn
 patsy
 statsmodels
+ggplot

@@ -48,7 +48,7 @@ class metric:
         self.degrees = 0
 
         #Tag
-        self.tag = None
+        self.tag = []
 
     def add(self, n, step_time=None, tag=None):
         if n is not None:
@@ -109,29 +109,27 @@ class metric:
                     self.surface_set.remove(n)
                 self.surface = len(self.surface_set)
                 self.surface_step.append(self.surface)
-                self.tag.append(tag)
 
 
     def asMap(self):
-        return {"numberActivatedUsers": self.numberActivatedUsers,
-                "numberOfActivations": self.numberOfActivations,
-                "usagedominance": self.usagedominance,
-                "userusagedominance": self.userUsageDominance,
-                "usageEntorpy": self.usageEntorpy,
-                "userUsageEntorpy": self.userUsageEntorpy,
-                "ActivateionExposure": self.ActivateionExposure,
-                "UserExposure": self.UserExposure,
-                "inffectedCommunities": self.inffectedCommunities,
+        return {"number_activated_users": self.numberActivatedUsers,
+                "number_activations": self.numberOfActivations,
+                "usage_dominace": self.usagedominance,
+                "user_usage_dominance": self.userUsageDominance,
+                "activation_entorpy": self.usageEntorpy,
+                "user_usage_entorpy": self.userUsageEntorpy,
+                "activateion_exposure": self.ActivateionExposure,
+                "user_exposure": self.UserExposure,
+                "inffected_communities": self.inffectedCommunities,
                 "surface": self.surface,
-                "inffectedCommunitiesnor": self.inffectedCommunitiesnor,
+                "inffected_communities_normalised": self.inffectedCommunitiesnor,
                 "node": self.sequence[-1],
                 "community": self.sequence_community[-1],
                 "time": self.sequence_time[-1],
-                "numberActivatedUsersnorm": self.numberActivatedUsersnorm,
+                "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
-                "degree": self.degrees,
-                "tag":self.tag}
+                "degree": self.degrees}
 
     def to_JSON(self):
         return json.dumps(self.__dict__)

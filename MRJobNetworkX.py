@@ -18,19 +18,16 @@ import pandas as pd
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
-from collections import Counter
 import cascade
 import metrics
-import numpy as np
-import scipy
 
 class MRJobNetworkX(MRJob):
+
     OUTPUT_PROTOCOL = JSONValueProtocol
 
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
         self.add_file_option('--network')
-        self.add_passthrough_option('--avrage', type='int', default=0, help='...')
 
     def runCascade(self, C):
         cas = C
@@ -52,10 +49,6 @@ class MRJobNetworkX(MRJob):
         self.tmp = {node: 0 for node in self.G.nodes()}
         nx.set_node_attributes(self.G, 'activated', self.tmp)
 
-    def entropy_compute(self,X):
-        #Add all the tags
-        return scipy.stats.entropy(pd.value_counts(X).reindex(["A"]).fillna(0).values)
-
     def mapper(self, _, line):
 
         nx.set_node_attributes(self.G, 'activated', self.tmp)
@@ -63,7 +56,6 @@ class MRJobNetworkX(MRJob):
 
         if line[-1] != "#":
             with client.read(urlparse(line).path) as r:
-                # with open(urlparse(line).path) as r:
                 buf = BytesIO(r.read())
 
                 # If the data is in a GZipped file.
@@ -75,11 +67,9 @@ class MRJobNetworkX(MRJob):
                 idx, values = self.runCascade(cascade.actualCascade(buf, self.G))
                 df = pd.DataFrame(values, index=idx).sort_index()
 
-                #compute the entropy of tags up to that point
-                df["tag_entropy"] = pd.expanding_apply(df["tag"].expanding(), self.entropy_compute)
-
                 #check to see if there is data within the dataframes.
                 if len(df.index) > 0:
+<<<<<<< Updated upstream
                     # Set the index to tbe the number of active users, this is then at the first instance that
                     #A new user uses the actions
                     result_act, result_user = self.generate_tables(df)
@@ -201,21 +191,16 @@ class MRJobNetworkX(MRJob):
                 r_a_l = r_a_l.groupby(r_a_l.index).mean()
 
         yield key, {"result_user": r_u_l.to_json(), "result_act": r_a_l.to_json()}
+=======
+                    yield None, {"file": line, "name": line.split("/")[-1],
+                                    "raw": df.sort_index().reset_index().to_json(date_unit="s")}
+>>>>>>> Stashed changes
 
     def steps(self):
-        if self.options.avrage == 1:
-            return [
-                MRStep(mapper_init=self.mapper_init,
-                       mapper=self.mapper,
-                       combiner=self.combiner,
-                       reducer=self.reducer
-                       )
-            ]
-        else:
-            return [
-                MRStep(mapper_init=self.mapper_init,
-                       mapper=self.mapper
-                       )
-            ]
+        return [
+            MRStep(mapper_init=self.mapper_init,
+                   mapper=self.mapper
+                   )
+        ]
 if __name__ == '__main__':
     MRJobNetworkX.run()

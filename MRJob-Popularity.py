@@ -44,7 +44,7 @@ class MRJobPopularity(MRJob):
 
         for d in self.days:
 
-            dft = df.set_index(pd.DatetimeIndex(df['time']))
+            dft = df.set_index(pd.DatetimeIndex(df['time']))[["number_activations","number_activated_users"]]
             dft = dft.resample('d').max()
             idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=d))
             dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')

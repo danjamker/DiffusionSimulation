@@ -29,6 +29,7 @@ class MRJobPopularity(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
+    INTERNAL_PROTOCOL = JSONValueProtocol
     days = [7, 14, 30, 60, 90]
 
     def configure_options(self):
@@ -48,29 +49,22 @@ class MRJobPopularity(MRJob):
             idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=d))
             dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
-
-            dft = df.set_index(pd.DatetimeIndex(df['time']))
-
-            start = dft.index.searchsorted(dft.index[0])
-            end = dft.index.searchsorted(dft.index[0] + datetime.timedelta(days=d))
-            dft = dft.ix[start:end]
-
             dft["user_popularity"] = (dft["number_activated_users"]/ dft["number_activated_users"].sum())
             dft["popularity"] = (dft["number_activations"]/ dft["number_activations"].sum())
 
             if self.options.avrage == 0:
                 yield None, {"timedelta": d,
                                     "popularity": dft["popularity"].mean(),
-                                    "popularity_json": dft["popularity"].to_json(),
+                                    "popularity_json": dft[["popularity"]].reset_index().to_json(),
                                     "user_popularity": dft["user_popularity"].mean(),
-                                    "user_popularity_json": dft["user_popularity"].to_json(),
+                                    "user_popularity_json": dft[["user_popularity"]].reset_index().to_json(),
                                     "word": line["file"].split("/")[-1]}
             else:
                 yield d, {"timedelta": d,
                           "popularity": dft["popularity"].mean(),
-                          "popularity_json": dft["popularity"].to_json(),
+                          "popularity_json": dft.reset_index()[["popularity"]].to_json(),
                           "user_popularity": dft["user_popularity"].mean(),
-                          "user_popularity_json": dft["user_popularity"].to_json(),
+                          "user_popularity_json": dft.reset_index()[["user_popularity"]].to_json(),
                           "word": line["file"].split("/")[-1]}
 
     def reducer(self, key, values):
@@ -85,11 +79,12 @@ class MRJobPopularity(MRJob):
         df_user_popularity = None
         for v in values:
             if df_popularity is None:
-                df_popularity = pd.read_json(v["popularity"])
-                df_user_popularity = pd.read_json(v["user_popularity"])
+                print v["popularity_json"]
+                df_popularity = pd.read_json(v["popularity_json"])
+                df_user_popularity = pd.read_json(v["user_popularity_json"])
             else:
-                df_popularity = pd.concat((df_popularity, pd.read_json(v["popularity"])))
-                df_user_popularity = pd.concat((df_user_popularity, pd.read_json(v["user_popularity"])))
+                df_popularity = pd.concat((df_popularity, pd.read_json(v["popularity_json"])))
+                df_user_popularity = pd.concat((df_user_popularity, pd.read_json(v["user_popularity_json"])))
 
         yield key, {"period":key, "popularity":df_popularity.groupby(df_popularity.index).mean().to_json(), "user_popularity":df_user_popularity.groupby(df_user_popularity.index).mean().to_json()}
 

@@ -54,11 +54,11 @@ class MRJobPopularity(MRJob):
 
             if self.options.avrage == 0:
                 yield None, {"timedelta": d,
-                                    "popularity": dft["popularity"].mean(),
-                                    "popularity_json": dft[["popularity"]].reset_index().to_json(),
-                                    "user_popularity": dft["user_popularity"].mean(),
-                                    "user_popularity_json": dft[["user_popularity"]].reset_index().to_json(),
-                                    "word": line["file"].split("/")[-1]}
+                             "popularity": dft["popularity"].mean(),
+                             "popularity_json": dft.reset_index()[["popularity"]].to_json(),
+                             "user_popularity": dft["user_popularity"].mean(),
+                             "user_popularity_json": dft.reset_index()[["user_popularity"]].to_json(),
+                             "word": line["file"].split("/")[-1]}
             else:
                 yield d, {"timedelta": d,
                           "popularity": dft["popularity"].mean(),

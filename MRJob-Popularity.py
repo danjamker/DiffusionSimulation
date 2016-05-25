@@ -29,7 +29,7 @@ class MRJobPopularity(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
-    INTERNAL_PROTOCOL = JSONValueProtocol
+
     days = [7, 14, 30, 60, 90]
 
     def configure_options(self):
@@ -49,8 +49,8 @@ class MRJobPopularity(MRJob):
             idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=d))
             dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
-            dft["user_popularity"] = (dft["number_activated_users"]/ dft["number_activated_users"].sum())
-            dft["popularity"] = (dft["number_activations"]/ dft["number_activations"].sum())
+            dft["user_popularity"] = (dft["number_activated_users"]/ dft["number_activated_users"][-1])
+            dft["popularity"] = (dft["number_activations"]/ dft["number_activations"][-1])
 
             if self.options.avrage == 0:
                 yield None, {"timedelta": d,
@@ -79,7 +79,6 @@ class MRJobPopularity(MRJob):
         df_user_popularity = None
         for v in values:
             if df_popularity is None:
-                print v["popularity_json"]
                 df_popularity = pd.read_json(v["popularity_json"])
                 df_user_popularity = pd.read_json(v["user_popularity_json"])
             else:

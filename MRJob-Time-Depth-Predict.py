@@ -61,8 +61,8 @@ class MRJobPopularityRaw(MRJob):
         idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=30))
         df = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
-        df["user_target"] = df["numberActivatedUsers"].values[-1]
-        df["activation_target"] = df["numberOfActivations"].values[-1]
+        df["user_target"] = df["number_activated_users"].values[-1]
+        df["activation_target"] = df["number_activations"].values[-1]
 
         for k, v in df.reset_index().iterrows():
             yield k, {"df": v.to_json(),

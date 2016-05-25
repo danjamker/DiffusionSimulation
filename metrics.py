@@ -81,8 +81,7 @@ class metric:
                         self.current_time = step_time
                         self.early_spread_time = self.sequence_time[-1] - self.sequence_time[0]
 
-
-                   = [np.float64(self.activationsPerCommunity[c]) / self.numberOfActivations for c in self.Communities]
+                norm_activationsPerCommunity = [np.float64(self.activationsPerCommunity[c]) / self.numberOfActivations for c in self.Communities]
                 self.usagedominance = max(norm_activationsPerCommunity)
                 norm_activatedUsersPerCommunity = [np.float64(self.activatedUsersPerCommunity[c]) / self.numberActivatedUsers for c in self.Communities]
                 self.userUsageDominance = max(norm_activatedUsersPerCommunity)

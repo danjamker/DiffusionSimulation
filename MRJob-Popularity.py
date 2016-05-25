@@ -71,7 +71,6 @@ class MRJobPopularity(MRJob):
         d = []
         for v in values:
             d.append(v)
-
         yield None, pd.DataFrame(d).to_json()
 
     def reducer_2(self, key, values):

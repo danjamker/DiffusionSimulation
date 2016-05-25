@@ -37,10 +37,10 @@ class MRJobPopularityRaw(MRJob):
 
     combinations = {
         "time":["time_step_mean","time_step_cv"],
-        "basic":["surface","number_activated_users_normalised"],
-        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy"],
+        "basic":["surface","number_activated_users","number_activations"],
+        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users_normalised","inffected_communities_normalised","user_usage_entorpy","activation_entorpy"]
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
     }
 
     target = ["user_target","activation_target"]
@@ -57,7 +57,7 @@ class MRJobPopularityRaw(MRJob):
         df['time'] = df['time'].apply(dt)
         df = df.set_index(pd.DatetimeIndex(df['time']))
 
-        df = df.resample('d').max()
+        df = df.resample('d').mean()
         idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=30))
         df = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
@@ -101,19 +101,19 @@ class MRJobPopularityRaw(MRJob):
         result_user["user_exposure_median"] = result_user["user_exposure"].expanding(min_periods=1).median()
         result_user["user_exposure_min"] = result_user["user_exposure"].expanding(min_periods=1).max()
         result_user["user_exposure_mean"] = result_user["user_exposure"].expanding(min_periods=1).min()
-        result_user["ActivateionExposure_mean"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_mean"] = result_user["activateion_exposure"].expanding(
             min_periods=1).mean()
-        result_user["ActivateionExposure_cv"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_cv"] = result_user["activateion_exposure"].expanding(
             min_periods=1).std()
-        result_user["ActivateionExposure_var"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_var"] = result_user["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_user["ActivateionExposure_var"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_var"] = result_user["activateion_exposure"].expanding(
             min_periods=1).var()
-        result_user["ActivateionExposure_median"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_median"] = result_user["activateion_exposure"].expanding(
             min_periods=1).median()
-        result_user["ActivateionExposure_max"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_max"] = result_user["activateion_exposure"].expanding(
             min_periods=1).max()
-        result_user["ActivateionExposure_min"] = result_user["activateion_exposure"].expanding(
+        result_user["activateion_exposure_min"] = result_user["activateion_exposure"].expanding(
             min_periods=1).min()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()

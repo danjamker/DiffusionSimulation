@@ -46,6 +46,10 @@ class metric:
         self.surface = 0
         self.surface_set = set()
 
+        #Wiener
+        self.wiener_index_avrage = 0
+        self.number_of_trees = 0
+
         # User metrics
         self.pagerank = 0
         self.degrees = 0
@@ -112,15 +116,25 @@ class metric:
                 self.surface = len(self.surface_set)
                 self.surface_step.append(self.surface)
 
+<<<<<<< Updated upstream
                 # Wiener indexx avrage
                 a = []
                 gf = [n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0]
+=======
+                #Wiener indexx avrage
+                a = []
+                gf = [n for n,attrdict in self.G.node.items() if attrdict ['activated'] > 0 ]
+>>>>>>> Stashed changes
                 sg = self.G.subgraph(gf)
                 for cc in list(nx.connected_component_subgraphs(sg)):
                     a.append(self.wiener_index(cc))
 
                 self.wiener_index_avrage = np.mean(a)
                 self.number_of_trees = len(a)
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
     def asMap(self):
         return {"number_activated_users": self.numberActivatedUsers,
@@ -140,13 +154,17 @@ class metric:
                 "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
+<<<<<<< Updated upstream
                 "number_of_trees": self.number_of_trees,
+=======
+>>>>>>> Stashed changes
                 "wiener_index_avrage": self.wiener_index_avrage,
                 "degree": self.degrees}
 
     def to_JSON(self):
         return json.dumps(self.__dict__)
 
+<<<<<<< Updated upstream
 class broker_metrics(metric):
 
     roleTypes = {
@@ -177,3 +195,17 @@ class broker_metrics(metric):
 
     def asMap(self):
         return self.results
+=======
+    def wiener_index(self, G, weight=None):
+        from itertools import chain
+
+        is_directed = G.is_directed()
+        if (is_directed and not nx.components.is_strongly_connected(G)) or \
+                (not is_directed and not nx.components.is_connected(G)):
+            return float('inf')
+        pp = nx.shortest_paths.shortest_path_length(G, weight=weight)
+        cc = [p.values() for k, p in pp.iteritems()]
+        total = sum(chain.from_iterable(cc))
+        # Need to account for double counting pairs of nodes in undirected graphs.
+        return total if is_directed else total / 2
+>>>>>>> Stashed changes

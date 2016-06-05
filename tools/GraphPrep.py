@@ -127,6 +127,14 @@ class GraphPrep:
             for c in df.columns.values.tolist():
                 nx.set_node_attributes(self.G, c, {index: row[c]})
         return self
+
+    def save_to_gml(self, path):
+        nx.write_gml(self.G, path)
+        return self
+
+    def save_to_graphml(self, path):
+        nx.write_graphml(self.G, path)
+        return self
 if __name__ == '__main__':
     # GraphPrep(
     #     "/Users/kershad1/Downloads/twitter_geo_network"). \
@@ -149,37 +157,35 @@ if __name__ == '__main__':
     #     edge_swap(iterations=10).save_edges_to_csv("./../data/shuffel/reddit_traversal_network_shuffel_3.csv")
 
     GraphPrep(
-        "/Users/kershad1/Downloads/twitter_geo_network.csv"). \
-        to_undriected(). \
+        "/Users/danielkershaw/Downloads/twitter_geo_network.csv"). \
         remove_unconnected_nodes(). \
         remove_self_loop(). \
-        detect_communities(). \
         pagerank(). \
-        save_to_pickle("../data/pickle/twitter_geo_network_pagerank.gpickle")
+        save_to_graphml("../networks/twitter_geo_network_pagerank_directed.graphml")
 
-    GraphPrep(
-        "/Users/kershad1/Downloads/reddit_traversal_network"). \
-        to_undriected(). \
-        remove_unconnected_nodes(). \
-        remove_self_loop(). \
-        detect_communities(). \
-        pagerank(). \
-        save_to_pickle("../data/pickle/reddit_traversal_network_pagerank.gpickle")
-
-    GraphPrep(
-        "/Users/kershad1/Downloads/twitter_mention_network"). \
-        to_undriected(). \
-        remove_unconnected_nodes(). \
-        remove_self_loop(). \
-        detect_communities(). \
-        pagerank(). \
-        save_to_pickle("../data/pickle/twitter_mention_network_pagerank.gpickle")
-
-    GraphPrep(
-        "/Users/kershad1/Downloads/reddit_comment_network"). \
-        to_undriected(). \
-        remove_unconnected_nodes(). \
-        remove_self_loop(). \
-        detect_communities(). \
-        pagerank(). \
-        save_to_pickle("../data/pickle/reddit_comment_network_pagerank.gpickle")
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/reddit_traversal_network"). \
+    #     to_undriected(). \
+    #     remove_unconnected_nodes(). \
+    #     remove_self_loop(). \
+    #     detect_communities(). \
+    #     pagerank(). \
+    #     save_to_pickle("../data/pickle/reddit_traversal_network_pagerank.gpickle")
+    #
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/twitter_mention_network"). \
+    #     to_undriected(). \
+    #     remove_unconnected_nodes(). \
+    #     remove_self_loop(). \
+    #     detect_communities(). \
+    #     pagerank(). \
+    #     save_to_pickle("../data/pickle/twitter_mention_network_pagerank.gpickle")
+    #
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/reddit_comment_network"). \
+    #     to_undriected(). \
+    #     remove_unconnected_nodes(). \
+    #     remove_self_loop(). \
+    #     detect_communities(). \
+    #     pagerank(). \
+    #     save_to_pickle("../data/pickle/reddit_comment_network_pagerank.gpickle")

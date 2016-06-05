@@ -6,7 +6,10 @@ import operator
 import networkx as nx
 import numpy as np
 import scipy.stats
+from collections import Counter
+
 class metric:
+
     def __init__(self, G):
         self.G = G
         self.Communities = list(set([attrdict['community'] for n, attrdict in self.G.node.items()]))
@@ -109,6 +112,15 @@ class metric:
                 self.surface = len(self.surface_set)
                 self.surface_step.append(self.surface)
 
+                # Wiener indexx avrage
+                a = []
+                gf = [n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0]
+                sg = self.G.subgraph(gf)
+                for cc in list(nx.connected_component_subgraphs(sg)):
+                    a.append(self.wiener_index(cc))
+
+                self.wiener_index_avrage = np.mean(a)
+                self.number_of_trees = len(a)
 
     def asMap(self):
         return {"number_activated_users": self.numberActivatedUsers,
@@ -128,7 +140,40 @@ class metric:
                 "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
+                "number_of_trees": self.number_of_trees,
+                "wiener_index_avrage": self.wiener_index_avrage,
                 "degree": self.degrees}
 
     def to_JSON(self):
         return json.dumps(self.__dict__)
+
+class broker_metrics(metric):
+
+    roleTypes = {
+        "coordinator"	: lambda pred ,broker ,succ: pred == broker == succ,
+        "gatekeeper" 	 	: lambda pred ,broker ,succ: pred != broker == succ,
+        "representative"	: lambda pred ,broker ,succ: pred == broker != succ,
+        "consultant"		: lambda pred ,broker ,succ: pred == succ != broker,
+        "liaison"			: lambda pred ,broker ,succ: pred != succ and pred != broker and broker != succ,
+        }
+
+    def __init__(self, G, attribute):
+        self.G = G
+        self.attribute = attribute
+        self.results = {}
+
+    def add(self, n):
+        dict1 = [self.some(m, n) for m in self.G.neighbors(n) if m != n]
+        self.results = reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), dict1)
+
+    def some(self, node_from, node_activated):
+        return Counter([self.get_brockerage(self.G[x][self.attribute], self.G[node_from][self.attribute], self.G[node_activated][self.attribute]) for x in self.G.neighbors(node_from) if x != node_activated and self.G[x]["activated"] > 0])
+
+    def get_brockerage(self,predecessor_group ,broker_group ,successor_group):
+        for role, predicate in self.roleTypes.iteritems():
+            if predicate(predecessor_group, broker_group, successor_group):
+                return role
+        raise Exception("Could not classify... this should never happen")
+
+    def asMap(self):
+        return self.results

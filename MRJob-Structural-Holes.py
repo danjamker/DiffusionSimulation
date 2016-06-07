@@ -34,8 +34,7 @@ class MRJobStructuralHoles(MRJob):
 
     def mapper_init_sh(self):
         self.G = nx.read_gpickle(self.options.network)
-        self.A = nx.to_numpy_matrix(self.G)
-        self.p = structural_holes._calcProportionalTieStrengths(self.A)
+
         self.constraints = {}
 
 
@@ -56,17 +55,22 @@ class MRJobStructuralHoles(MRJob):
         yield None, roles
 
     def mapper_sh(self, _, node):
+
+        sub = self.G.subgraph([x for x in self.G.neighbors(node)]+[node])
+        self.A = nx.to_numpy_matrix(sub)
+        self.p = structural_holes._calcProportionalTieStrengths(self.A)
+
         constraint = {"C-Index": 0.0, "C-Size": 0.0, "C-Density": 0.0, "C-Hierarchy": 0.0}
 
-        Vi = structural_holes._neighborsIndexes(self.G, node, self.options.includeOutLinks, self.options.includeInLinks)
+        Vi = structural_holes._neighborsIndexes(sub, node, self.options.includeOutLinks, self.options.includeInLinks)
 
         # i is the node we are calculating constraint for
         # and is thus the ego of the ego net
-        i = self.G.nodes().index(node)
+        i = sub.nodes().index(node)
 
         if not self.options.wholeNetwork:
             # need to recalculate p w/r/t this node
-            pq = structural_holes._calcProportionaTieStrengthWRT(A, i)
+            pq = structural_holes._calcProportionaTieStrengthWRT(sub, i)
         else:
             # don't need to calculate p w/r/t any node
             pq = self.p

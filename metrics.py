@@ -125,7 +125,7 @@ class metric(object):
                 #Wiener indexx avrage
                 a = []
                 sg = self.cascade_extrator()
-                for cc in list(nx.connected_component_subgraphs(sg)):
+                for cc in list(nx.connected_component_subgraphs(sg.to_undirected())):
                     a.append(self.wiener_index(cc.to_undirected()))
 
                 self.wiener_index_avrage = np.mean(a)

@@ -67,7 +67,7 @@ class metric(object):
 
                 node = self.G.node[n]
                 self.sequence.append(n)
-                self.sequence_community.append(node["community"])
+                self.sequence_community.append(node["group"])
                 self.sequence_time.append(step_time)
                 if "pagerank" in node:
                     self.pagerank = node["pagerank"]
@@ -76,10 +76,11 @@ class metric(object):
                 if node["activated"] == 1:
                     self.numberActivatedUsers += 1
                     self.numberActivatedUsersnorm = self.numberActivatedUsers / self.numberOfNodes
-                    self.activatedUsersPerCommunity[node["community"]] += 1
+                    self.activatedUsersPerCommunity[node["group"]] += 1
+                    self.activatedUsersPerCommunity[node["group"]] += 1
 
                 self.numberOfActivations += 1
-                self.activationsPerCommunity[node["community"]] += 1
+                self.activationsPerCommunity[node["group"]] += 1
 
                 #Compute time diffrence if provided
                 if step_time != None:

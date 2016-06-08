@@ -7,12 +7,16 @@ import networkx as nx
 import numpy as np
 import scipy.stats
 from collections import Counter
+from collections import defaultdict
 
-class metric:
+from networkx_additional_algorithms import structural_holes
+from networkx_additional_algorithms import brokerage
+
+class metric(object):
 
     def __init__(self, G):
         self.G = G
-        self.Communities = list(set([attrdict['community'] for n, attrdict in self.G.node.items()]))
+        self.Communities = list(set([attrdict['group'] for n, attrdict in self.G.node.items()]))
         self.numberActivatedUsers = 0
         self.numberOfActivations = 0
         self.usagedominance = 0
@@ -116,25 +120,25 @@ class metric:
                 self.surface = len(self.surface_set)
                 self.surface_step.append(self.surface)
 
-<<<<<<< Updated upstream
-                # Wiener indexx avrage
-                a = []
-                gf = [n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0]
-=======
+
                 #Wiener indexx avrage
                 a = []
-                gf = [n for n,attrdict in self.G.node.items() if attrdict ['activated'] > 0 ]
->>>>>>> Stashed changes
-                sg = self.G.subgraph(gf)
+                sg = self.cascade_extrator()
                 for cc in list(nx.connected_component_subgraphs(sg)):
-                    a.append(self.wiener_index(cc))
+                    a.append(self.wiener_index(cc.to_undirected()))
 
                 self.wiener_index_avrage = np.mean(a)
                 self.number_of_trees = len(a)
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
+    def cascade_extrator(self, time_attribut="time"):
+        from datetime import datetime
+        sg = self.G.subgraph(set(self.sequence)).copy()
+
+        for s, t, d in sg.edges(data=True):
+            if ( sg.node[s][time_attribut] > sg.node[t][time_attribut] ) or sg.node[s][time_attribut] < datetime.strptime(d["created_at"],"%Y-%m-%d"):
+                sg.remove_edge(*(s,t))
+
+        return sg
 
     def asMap(self):
         return {"number_activated_users": self.numberActivatedUsers,
@@ -154,48 +158,11 @@ class metric:
                 "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
-<<<<<<< Updated upstream
                 "number_of_trees": self.number_of_trees,
-=======
->>>>>>> Stashed changes
                 "wiener_index_avrage": self.wiener_index_avrage,
                 "degree": self.degrees}
 
-    def to_JSON(self):
-        return json.dumps(self.__dict__)
 
-<<<<<<< Updated upstream
-class broker_metrics(metric):
-
-    roleTypes = {
-        "coordinator"	: lambda pred ,broker ,succ: pred == broker == succ,
-        "gatekeeper" 	 	: lambda pred ,broker ,succ: pred != broker == succ,
-        "representative"	: lambda pred ,broker ,succ: pred == broker != succ,
-        "consultant"		: lambda pred ,broker ,succ: pred == succ != broker,
-        "liaison"			: lambda pred ,broker ,succ: pred != succ and pred != broker and broker != succ,
-        }
-
-    def __init__(self, G, attribute):
-        self.G = G
-        self.attribute = attribute
-        self.results = {}
-
-    def add(self, n):
-        dict1 = [self.some(m, n) for m in self.G.neighbors(n) if m != n]
-        self.results = reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), dict1)
-
-    def some(self, node_from, node_activated):
-        return Counter([self.get_brockerage(self.G[x][self.attribute], self.G[node_from][self.attribute], self.G[node_activated][self.attribute]) for x in self.G.neighbors(node_from) if x != node_activated and self.G[x]["activated"] > 0])
-
-    def get_brockerage(self,predecessor_group ,broker_group ,successor_group):
-        for role, predicate in self.roleTypes.iteritems():
-            if predicate(predecessor_group, broker_group, successor_group):
-                return role
-        raise Exception("Could not classify... this should never happen")
-
-    def asMap(self):
-        return self.results
-=======
     def wiener_index(self, G, weight=None):
         from itertools import chain
 
@@ -208,4 +175,44 @@ class broker_metrics(metric):
         total = sum(chain.from_iterable(cc))
         # Need to account for double counting pairs of nodes in undirected graphs.
         return total if is_directed else total / 2
->>>>>>> Stashed changes
+
+    def to_JSON(self):
+        return json.dumps(self.__dict__)
+
+class broker_metrics(metric):
+
+    roleTypes = {
+        "coordinator"	: lambda pred ,broker ,succ: pred == broker == succ,
+        "gatekeeper" 	 	: lambda pred ,broker ,succ: pred != broker == succ,
+        "representative"	: lambda pred ,broker ,succ: pred == broker != succ,
+        "consultant"		: lambda pred ,broker ,succ: pred == succ != broker,
+        "liaison"			: lambda pred ,broker ,succ: pred != succ and pred != broker and broker != succ,
+        }
+
+    def __init__(self, G, attribute):
+        super(self.__class__, self).__init__(G)
+        self.attribute = attribute
+        self.results = {}
+
+    def add(self, no):
+        self.sequence.append(no)
+        sg = self.cascade_extrator()
+
+        roles = dict((n, dict((role, 0) for role in self.roleTypes)) for n in sg)
+        for node in sg:
+
+            for successor in sg.successors(node):
+                for predecessor in sg.predecessors(node):
+                    if successor == predecessor or successor == node or predecessor == node: continue
+                    if not (sg.has_edge(predecessor, successor)):
+                        # found a broker!
+                        # now which kind depends on who is in which group
+                        roles[node][brokerage._RoleClassifier.classify(sg.node[predecessor][self.attribute], sg.node[node][self.attribute],
+                                                                       sg.node[successor][self.attribute])] += 1
+
+
+        self.results = reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), roles.values())
+
+    def asMap(self):
+        return self.results
+

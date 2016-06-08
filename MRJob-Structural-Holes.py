@@ -17,6 +17,7 @@ from mrjob.step import MRStep
 from networkx_additional_algorithms import structural_holes
 from networkx_additional_algorithms import brokerage
 import networkx as nx
+
 import pandas as pd
 class MRJobStructuralHoles(MRJob):
 

@@ -19,6 +19,7 @@ from networkx_additional_algorithms import brokerage
 import networkx as nx
 import pandas as pd
 class MRJobStructuralHoles(MRJob):
+
     OUTPUT_PROTOCOL = JSONValueProtocol
 
     def configure_options(self):

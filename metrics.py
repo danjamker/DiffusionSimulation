@@ -136,7 +136,7 @@ class metric(object):
         sg = self.G.subgraph(set(self.sequence)).copy()
 
         for s, t, d in sg.edges(data=True):
-            if ( sg.node[s][time_attribut] > sg.node[t][time_attribut] ) or sg.node[s][time_attribut] < datetime.strptime(d["createdat"],"%Y-%m-%d %H:%M:%S"):
+            if ( sg.node[s][time_attribut] > sg.node[t][time_attribut] ) or sg.node[s][time_attribut] < datetime.strptime(d["created_at"],"%Y-%m-%d %H:%M:%S"):
                 sg.remove_edge(*(s,t))
 
         return sg

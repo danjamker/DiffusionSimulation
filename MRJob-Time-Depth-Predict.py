@@ -15,12 +15,13 @@ from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
 import datetime
-
+import json
 import sklearn
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import KFold
+from sklearn.cluster import KMeans
 
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
@@ -35,6 +36,7 @@ class MRJobPopularityRaw(MRJob):
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
 
+    #TODO get this so that it is read in from a file
     combinations = {
         "time":["time_step_mean","time_step_cv"],
         "basic":["surface","number_activated_users","number_activations"],
@@ -65,17 +67,46 @@ class MRJobPopularityRaw(MRJob):
         df["activation_target"] = df["number_activations"].values[-1]
 
         for k, v in df.reset_index().iterrows():
-            yield k, {"df": v.to_json(),
-                                "word": line["file"].split("/")[-1],
-                                "period": 30}
+                yield k, {"df": v.to_json(),
+                                    "word": line["file"].split("/")[-1],
+                                    "period": 30,
+                                    "popularity": self.compute_popularity(df, k)[0]}
 
+    def compute_popularity(self, df, days):
+
+        up = []
+        p = []
+        for x in range(0, days):
+            dft = df[["number_activations", "number_activated_users"]]
+            dft = dft.resample('d').max()
+            idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=x))
+            dft = dft.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
+
+            up.append((dft["number_activated_users"] / dft["number_activated_users"][-1]).mean())
+            p.append((dft["number_activations"] / dft["number_activations"][-1]).mean())
+
+        return up, p
 
     def reducer(self, key, values):
+        #TODO compute the populaity K-Means class, this will be a cotogory valibal in the linear regression
+        df = {}
+        df_kmean = {}
 
-        df = pd.DataFrame()
         for v in values:
-            df = df.append(pd.read_json(v["df"], typ='series', dtype=False), ignore_index=True)
+            df[v["word"]] = json.loads(v["df"])
+            df_kmean[v["word"]] = v["popularity"]
 
+        df = pd.DataFrame(df).T
+        df_kmean = pd.DataFrame(df_kmean).T
+
+        #Learn the cluster mebership upuntill this time
+        x_cols = df_kmean.columns
+        cluster = KMeans(n_clusters=2)
+        df_kmean['cluster'] = cluster.fit_predict(df_kmean[x_cols])
+
+        #join the cluster membership to the other metrics
+        df = df.join(df_kmean)
+        print df
         if len(df) > 1:
             for k, v in self.combinations.iteritems():
                 for t in self.target:

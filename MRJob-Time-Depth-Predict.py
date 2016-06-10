@@ -42,7 +42,16 @@ class MRJobPopularityRaw(MRJob):
         "basic":["surface","number_activated_users","number_activations"],
         "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"],
+        "time-cluster": ["time_step_mean", "time_step_cv","cluster"],
+        "basic-cluster": ["surface", "number_activated_users", "number_activations","cluster"],
+        "community-cluster": ["inffected_communities_normalised", "activation_entorpy", "activation_entorpy", "usage_dominace",
+                      "user_usage_dominance","cluster"],
+        "exposure-cluster": ["user_exposure_mean", "activateion_exposure_mean","cluster"],
+        "all-cluster": ["time_step_mean", "time_step_cv", "surface", "number_activated_users", "number_activations",
+                "inffected_communities_normalised", "activation_entorpy", "activation_entorpy", "usage_dominace",
+                "user_usage_dominance", "user_exposure_mean", "activateion_exposure_mean","cluster"]
+
     }
 
     target = ["user_target","activation_target"]
@@ -76,7 +85,7 @@ class MRJobPopularityRaw(MRJob):
 
         up = []
         p = []
-        for x in range(0, days):
+        for x in range(0, days+1):
             dft = df[["number_activations", "number_activated_users"]]
             dft = dft.resample('d').max()
             idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=x))
@@ -233,7 +242,6 @@ class MRJobPopularityRaw(MRJob):
             results_array.append(mean_squared_error(Y_test, lm.predict(X_test)))
 
         return np.mean(results_array), np.var(results_array)
-
 
     def steps(self):
         return [MRStep(

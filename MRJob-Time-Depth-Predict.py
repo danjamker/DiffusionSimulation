@@ -115,7 +115,7 @@ class MRJobPopularityRaw(MRJob):
 
         #join the cluster membership to the other metrics
         df = df.join(df_kmean)
-        print df
+        # print df
         if len(df) > 1:
             for k, v in self.combinations.iteritems():
                 for t in self.target:

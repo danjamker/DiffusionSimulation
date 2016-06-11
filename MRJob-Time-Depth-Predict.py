@@ -60,7 +60,8 @@ class MRJobPopularityRaw(MRJob):
         "basic":["surface","number_activated_users","number_activations"],
         "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
+        "cascades":["wiener_index_avrage","number_of_trees"],
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
     }
 
     target = ["user_target","activation_target"]
@@ -69,6 +70,7 @@ class MRJobPopularityRaw(MRJob):
         super(MRJobPopularityRaw, self).configure_options()
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
         self.add_passthrough_option('--cluster', type='int', default=2, help='...')
+        self.add_passthrough_option('--folds', type='int', default=15, help='...')
 
     def mapper(self, _, line):
         for kt in range(30, 31):
@@ -156,7 +158,7 @@ class MRJobPopularityRaw(MRJob):
 
                     result = []
 
-                    kf = KFold(len(df), n_folds=15, shuffle=True)
+                    kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
                     for train_index, test_index in kf:
 
                         X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]

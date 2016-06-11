@@ -59,27 +59,28 @@ class MRJobPopularityRaw(MRJob):
     def configure_options(self):
         super(MRJobPopularityRaw, self).configure_options()
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
+        self.add_passthrough_option('--cluster', type='int', default=2, help='...')
 
     def mapper(self, _, line):
+        for kt in range(30, 31):
+            df = pd.read_json(line["raw"])
+            dfu, df = self.generate_tables(df)
 
-        df = pd.read_json(line["raw"])
-        dfu, df = self.generate_tables(df)
+            df['time'] = df['time'].apply(dt)
+            df = df.set_index(pd.DatetimeIndex(df['time']))
 
-        df['time'] = df['time'].apply(dt)
-        df = df.set_index(pd.DatetimeIndex(df['time']))
+            df = df.resample('d').mean()
+            idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=kt))
+            df = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
-        df = df.resample('d').mean()
-        idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=30))
-        df = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
+            df["user_target"] = df["number_activated_users"].values[-1]
+            df["activation_target"] = df["number_activations"].values[-1]
 
-        df["user_target"] = df["number_activated_users"].values[-1]
-        df["activation_target"] = df["number_activations"].values[-1]
-
-        for k, v in df.reset_index().iterrows():
-                yield k, {"df": v.to_json(),
-                                    "word": line["file"].split("/")[-1],
-                                    "period": 30,
-                                    "popularity": self.compute_popularity(df, k)[0]}
+            for k, v in df.reset_index().iterrows():
+                    yield {"observations":k, "target":kt}, {"df": v.to_json(),
+                                        "word": line["file"].split("/")[-1],
+                                        "period": kt,
+                                        "popularity": self.compute_popularity(df, k)[0]}
 
     def compute_popularity(self, df, days):
 
@@ -121,7 +122,37 @@ class MRJobPopularityRaw(MRJob):
                 for t in self.target:
                     r = self.liniar_regression(df.fillna(0), features=v, target=t)
 
-                    yield None, {"observation_level": key, "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t}
+                    yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"]}
+
+    def reducer_kmean(self, key, values):
+        #TODO compute the populaity K-Means class, this will be a cotogory valibal in the linear regression
+        df = {}
+        df_kmean = {}
+
+        for v in values:
+            df[v["word"]] = json.loads(v["df"])
+            df_kmean[v["word"]] = v["popularity"]
+
+        df = pd.DataFrame(df).T
+        df_kmean = pd.DataFrame(df_kmean).T
+
+        #Learn the cluster mebership upuntill this time
+        x_cols = df_kmean.columns
+        cluster = KMeans(n_clusters=self.options.cluster)
+        df_kmean['cluster'] = cluster.fit_predict(df_kmean[x_cols])
+        df = df.join(df_kmean)
+
+        for num in range(0,self.options.cluster,1):
+            #join the cluster membership to the other metrics
+            # print df
+            dft = df[(df["cluster"] == num)]
+            if len(df) > 1:
+                for k, v in self.combinations.iteritems():
+                    for t in self.target:
+                        r = self.liniar_regression(df.fillna(0), features=v, target=t)
+
+                        yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"], "cluster":num}
+
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='number_activated_users', keep='first').set_index(
@@ -230,18 +261,11 @@ class MRJobPopularityRaw(MRJob):
 
 
     def liniar_regression(self, df, features = [], target = "" , nfolds = 15):
+
         kf = KFold(len(df), n_folds=nfolds, shuffle=True)
-        results_array = []
-        for train_index, test_index in kf:
-            X_train, X_test = df.ix[train_index, features], df.ix[test_index, features]
-            Y_train, Y_test = df.ix[train_index, target], df.ix[test_index, target]
-
-            lm = LinearRegression(normalize=True)
-            lm.fit(X_train, Y_train)
-
-            results_array.append(mean_squared_error(Y_test, lm.predict(X_test)))
-
-        return np.mean(results_array), np.var(results_array)
+        lm = LinearRegression(normalize=True)
+        scores = sklearn.cross_validation.cross_val_score(lm, df[features], df[target], scoring='mean_squared_error', cv=kf )
+        return scores.mean(), scores.var()
 
     def steps(self):
         return [MRStep(

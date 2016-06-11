@@ -30,7 +30,8 @@ class MRJobPopularity(MRJob):
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
 
-    days = [x for x in range(0,101,5)]
+    # days = [x for x in range(0,101,5)]
+    days = [x for x in range(0,101,1)]
 
     def configure_options(self):
         super(MRJobPopularity, self).configure_options()

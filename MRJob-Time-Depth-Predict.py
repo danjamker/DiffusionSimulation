@@ -54,6 +54,15 @@ class MRJobPopularityRaw(MRJob):
 
     }
 
+
+    combinations_no_c = {
+        "time":["time_step_mean","time_step_cv"],
+        "basic":["surface","number_activated_users","number_activations"],
+        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
+        "exposure":["user_exposure_mean", "activateion_exposure_mean"],
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
+    }
+
     target = ["user_target","activation_target"]
 
     def configure_options(self):
@@ -133,25 +142,47 @@ class MRJobPopularityRaw(MRJob):
             df[v["word"]] = json.loads(v["df"])
             df_kmean[v["word"]] = v["popularity"]
 
-        df = pd.DataFrame(df).T
-        df_kmean = pd.DataFrame(df_kmean).T
+        df = pd.DataFrame(df).T.fillna(0)
+        df_kmean = pd.DataFrame(df_kmean).T.fillna(0)
 
         #Learn the cluster mebership upuntill this time
         x_cols = df_kmean.columns
-        cluster = KMeans(n_clusters=self.options.cluster)
-        df_kmean['cluster'] = cluster.fit_predict(df_kmean[x_cols])
-        df = df.join(df_kmean)
 
-        for num in range(0,self.options.cluster,1):
-            #join the cluster membership to the other metrics
-            # print df
-            dft = df[(df["cluster"] == num)]
-            if len(df) > 1:
-                for k, v in self.combinations.iteritems():
-                    for t in self.target:
-                        r = self.liniar_regression(df.fillna(0), features=v, target=t)
+        #join the cluster membership to the other metrics
+        # print df
+        if len(df) > 1:
+            for k, v in self.combinations_no_c.iteritems():
+                for t in self.target:
 
-                        yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"], "cluster":num}
+                    result = []
+
+                    kf = KFold(len(df), n_folds=15, shuffle=True)
+                    for train_index, test_index in kf:
+
+                        X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
+                        Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
+
+                        train_kmean  = df_kmean.ix[train_index, x_cols]
+                        test_kmean = df_kmean.ix[test_index, x_cols]
+
+                        cluster = KMeans(n_clusters=self.options.cluster)
+                        train_kmean['cluster'] = cluster.fit_predict(train_kmean)
+                        test_kmean['cluster'] = cluster.predict(test_kmean)
+
+                        test_kmean.fillna(0)
+                        train_kmean.fillna(0)
+
+                        for num in set(test_kmean['cluster'].values):
+                            wor_train = train_kmean[(train_kmean["cluster"] == num)]
+                            wor_test = test_kmean[(test_kmean["cluster"] == num)]
+                            lm = LinearRegression(normalize=True)
+                            if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0:
+                                lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
+                                result.append(mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))])))
+
+                    yield None, {"observation_level": key, "result_mean": np.mean(result),  "result_var": np.var(result), "combination":k, "target":t}
+
+
 
 
     def generate_tables(self, df):
@@ -270,7 +301,7 @@ class MRJobPopularityRaw(MRJob):
     def steps(self):
         return [MRStep(
             mapper=self.mapper,
-            reducer=self.reducer
+            reducer=self.reducer_kmean
                )]
 
 if __name__ == '__main__':

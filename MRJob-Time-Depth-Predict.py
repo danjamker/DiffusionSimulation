@@ -73,7 +73,7 @@ class MRJobPopularityRaw(MRJob):
         self.add_passthrough_option('--folds', type='int', default=15, help='...')
 
     def mapper(self, _, line):
-        for kt in range(30, 31):
+        for kt in range(15, 45):
             df = pd.read_json(line["raw"])
             dfu, df = self.generate_tables(df)
 
@@ -182,7 +182,7 @@ class MRJobPopularityRaw(MRJob):
                                 lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
                                 result.append(mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))])))
 
-                    yield None, {"observation_level": key, "result_mean": np.mean(result),  "result_var": np.var(result), "combination":k, "target":t}
+                    yield None, {"observation_level": key["observations"], "result_mean": np.mean(result),  "result_var": np.var(result), "combination":k, "target":t, "target_level": key["target"]}
 
 
 

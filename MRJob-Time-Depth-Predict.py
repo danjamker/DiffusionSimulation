@@ -73,25 +73,26 @@ class MRJobPopularityRaw(MRJob):
         self.add_passthrough_option('--folds', type='int', default=15, help='...')
 
     def mapper(self, _, line):
+        df = pd.read_json(line["raw"])
+        dfu, df = self.generate_tables(df)
+
+        df['time'] = df['time'].apply(dt)
+        df = df.set_index(pd.DatetimeIndex(df['time']))
+
+        df = df.resample('d').mean()
         for kt in range(15, 45):
-            df = pd.read_json(line["raw"])
-            dfu, df = self.generate_tables(df)
 
-            df['time'] = df['time'].apply(dt)
-            df = df.set_index(pd.DatetimeIndex(df['time']))
-
-            df = df.resample('d').mean()
             idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=kt))
-            df = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
+            dft = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
-            df["user_target"] = df["number_activated_users"].values[-1]
-            df["activation_target"] = df["number_activations"].values[-1]
+            dft["user_target"] = dft["number_activated_users"].values[-1]
+            dft["activation_target"] = dft["number_activations"].values[-1]
 
-            for k, v in df.reset_index().iterrows():
+            for k, v in dft.reset_index().iterrows():
                     yield {"observations":k, "target":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1],
                                         "period": kt,
-                                        "popularity": self.compute_popularity(df, k)[0]}
+                                        "popularity": self.compute_popularity(dft, k)[0]}
 
     def compute_popularity(self, df, days):
 

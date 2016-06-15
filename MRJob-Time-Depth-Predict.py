@@ -69,7 +69,7 @@ class MRJobPopularityRaw(MRJob):
     def configure_options(self):
         super(MRJobPopularityRaw, self).configure_options()
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
-        self.add_passthrough_option('--cluster', type='int', default=2, help='...')
+        self.add_passthrough_option('--cluster', type='int', default=10, help='...')
         self.add_passthrough_option('--folds', type='int', default=15, help='...')
 
     def mapper(self, _, line):
@@ -80,7 +80,7 @@ class MRJobPopularityRaw(MRJob):
         df = df.set_index(pd.DatetimeIndex(df['time']))
 
         df = df.resample('d').mean()
-        for kt in range(15, 45):
+        for kt in range(15, 16):
 
             idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=kt))
             dft = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
@@ -89,10 +89,12 @@ class MRJobPopularityRaw(MRJob):
             dft["activation_target"] = dft["number_activations"].values[-1]
 
             for k, v in dft.reset_index().iterrows():
+                    pop = self.compute_popularity(dft, k)
                     yield {"observations":k, "target":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1],
                                         "period": kt,
-                                        "popularity": self.compute_popularity(dft, k)[0]}
+                                        "popularity": pop[0],
+                                        "user_popularity": pop[1]}
 
     def compute_popularity(self, df, days):
 
@@ -140,50 +142,51 @@ class MRJobPopularityRaw(MRJob):
         #TODO compute the populaity K-Means class, this will be a cotogory valibal in the linear regression
         df = {}
         df_kmean = {}
+        df_kmean_user = {}
 
         for v in values:
             df[v["word"]] = json.loads(v["df"])
             df_kmean[v["word"]] = v["popularity"]
+            df_kmean_user[v["word"]] = v["user_popularity"]
 
         df = pd.DataFrame(df).T.fillna(0)
         df_kmean = pd.DataFrame(df_kmean).T.fillna(0)
-
+        df_kmean_user = pd.DataFrame(df_kmean_user).T.fillna(0)
+        popdict = {"frequency":df_kmean,"user":df_kmean_user}
         #Learn the cluster mebership upuntill this time
         x_cols = df_kmean.columns
-
         #join the cluster membership to the other metrics
         # print df
         if len(df) > 1:
             for k, v in self.combinations_no_c.iteritems():
                 for t in self.target:
+                    for popk, popv in popdict.iteritems():
+                        kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
+                        for cnum in range(2, self.options.cluster):
+                            for train_index, test_index in kf:
 
-                    result = []
+                                X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
+                                Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
 
-                    kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
-                    for train_index, test_index in kf:
+                                train_kmean  = popv.ix[train_index, x_cols]
+                                test_kmean = popv.ix[test_index, x_cols]
 
-                        X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
-                        Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
+                                cluster = KMeans(n_clusters=self.options.cluster)
+                                train_kmean['cluster'] = cluster.fit_predict(train_kmean)
+                                test_kmean['cluster'] = cluster.predict(test_kmean)
 
-                        train_kmean  = df_kmean.ix[train_index, x_cols]
-                        test_kmean = df_kmean.ix[test_index, x_cols]
+                                test_kmean.fillna(0)
+                                train_kmean.fillna(0)
 
-                        cluster = KMeans(n_clusters=self.options.cluster)
-                        train_kmean['cluster'] = cluster.fit_predict(train_kmean)
-                        test_kmean['cluster'] = cluster.predict(test_kmean)
+                                for num in set(test_kmean['cluster'].values):
+                                    wor_train = train_kmean[(train_kmean["cluster"] == num)]
+                                    wor_test = test_kmean[(test_kmean["cluster"] == num)]
+                                    lm = LinearRegression(normalize=True)
+                                    if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0:
+                                        lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
+                                        r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
 
-                        test_kmean.fillna(0)
-                        train_kmean.fillna(0)
-
-                        for num in set(test_kmean['cluster'].values):
-                            wor_train = train_kmean[(train_kmean["cluster"] == num)]
-                            wor_test = test_kmean[(test_kmean["cluster"] == num)]
-                            lm = LinearRegression(normalize=True)
-                            if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0:
-                                lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
-                                result.append(mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))])))
-
-                    yield None, {"observation_level": key["observations"], "result_mean": np.mean(result),  "result_var": np.var(result), "combination":k, "target":t, "target_level": key["target"]}
+                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
 
 
 

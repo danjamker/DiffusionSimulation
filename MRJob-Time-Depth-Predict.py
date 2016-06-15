@@ -80,7 +80,7 @@ class MRJobPopularityRaw(MRJob):
         df = df.set_index(pd.DatetimeIndex(df['time']))
 
         df = df.resample('d').mean()
-        for kt in range(15, 16):
+        for kt in range(15, 60):
 
             idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=kt))
             dft = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
@@ -158,35 +158,36 @@ class MRJobPopularityRaw(MRJob):
         #join the cluster membership to the other metrics
         # print df
         if len(df) > 1:
-            for k, v in self.combinations_no_c.iteritems():
-                for t in self.target:
-                    for popk, popv in popdict.iteritems():
-                        kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
-                        for cnum in range(2, self.options.cluster):
-                            for train_index, test_index in kf:
+            kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
+            for popk, popv in popdict.iteritems():
 
-                                X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
-                                Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
+                X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
+                Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
 
-                                train_kmean  = popv.ix[train_index, x_cols]
-                                test_kmean = popv.ix[test_index, x_cols]
+                train_kmean = popv.ix[train_index, x_cols]
+                test_kmean = popv.ix[test_index, x_cols]
 
-                                cluster = KMeans(n_clusters=self.options.cluster)
-                                train_kmean['cluster'] = cluster.fit_predict(train_kmean)
-                                test_kmean['cluster'] = cluster.predict(test_kmean)
+                cluster = KMeans(n_clusters=self.options.cluster)
+                train_kmean['cluster'] = cluster.fit_predict(train_kmean)
+                test_kmean['cluster'] = cluster.predict(test_kmean)
 
-                                test_kmean.fillna(0)
-                                train_kmean.fillna(0)
+                test_kmean.fillna(0)
+                train_kmean.fillna(0)
+                for k, v in self.combinations_no_c.iteritems():
+                    for t in self.target:
+                            for cnum in range(2, self.options.cluster):
+                                for train_index, test_index in kf:
 
-                                for num in set(test_kmean['cluster'].values):
-                                    wor_train = train_kmean[(train_kmean["cluster"] == num)]
-                                    wor_test = test_kmean[(test_kmean["cluster"] == num)]
-                                    lm = LinearRegression(normalize=True)
-                                    if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0:
-                                        lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
-                                        r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
 
-                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
+                                    for num in set(test_kmean['cluster'].values):
+                                        wor_train = train_kmean[(train_kmean["cluster"] == num)]
+                                        wor_test = test_kmean[(test_kmean["cluster"] == num)]
+                                        lm = LinearRegression(normalize=True)
+                                        if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0:
+                                            lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
+                                            r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
+
+                                            yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
 
 
 

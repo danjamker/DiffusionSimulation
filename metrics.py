@@ -14,6 +14,13 @@ from networkx_additional_algorithms import brokerage
 
 class metric(object):
 
+    roleTypes = {
+        "coordinator": lambda pred, broker, succ: pred == broker == succ,
+        "gatekeeper" 	 : lambda pred , broker ,succ: pred != broker == succ,"representative"	: lambda pred , broker , succ: pred == broker != succ,
+        "consultant"		:lambda pred , broker, succ: pred == succ != broker,
+        "liaison"		: lambdapred , broker ,succ: pred != succ and pred != broker and broker != succ,
+    }
+
     def __init__(self, G):
         self.G = G
         self.Communities = list(set([attrdict['group'] for n, attrdict in self.G.node.items()]))
@@ -53,7 +60,8 @@ class metric(object):
         #Wiener
         self.wiener_index_avrage = 0
         self.number_of_trees = 0
-
+        self.cascade_edges = 0
+        self.cascade_nodes = 0
         # User metrics
         self.pagerank = 0
         self.degrees = 0
@@ -130,6 +138,9 @@ class metric(object):
 
                 self.wiener_index_avrage = np.mean(a)
                 self.number_of_trees = len(a)
+                self.cascade_edges = nx.number_of_edges(sg)
+                self.cascade_nodes = nx.number_of_nodes(sg)
+
 
     def cascade_extrator(self, time_attribut="time"):
         from datetime import datetime
@@ -161,7 +172,9 @@ class metric(object):
                 "pagerank": self.pagerank,
                 "number_of_trees": self.number_of_trees,
                 "wiener_index_avrage": self.wiener_index_avrage,
-                "degree": self.degrees}
+                "degree": self.degrees,
+                "cascade_nodes": self.cascade_nodes,
+                "cascade_edges": self.cascade_edges}
 
 
     def wiener_index(self, G, weight=None):

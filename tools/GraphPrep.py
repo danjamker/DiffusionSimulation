@@ -156,36 +156,30 @@ if __name__ == '__main__':
     #     "/Users/kershad1/Downloads/reddit_traversal_network"). \
     #     edge_swap(iterations=10).save_edges_to_csv("./../data/shuffel/reddit_traversal_network_shuffel_3.csv")
 
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/twitter_geo_network.csv"). \
+    #     remove_unconnected_nodes(). \
+    #     remove_self_loop(). \
+    #     pagerank(). \
+    #     save_to_graphml("../networks/twitter_geo_network_pagerank_directed.graphml")
+
+    # GraphPrep(
+    #     "/Users/kershad1/Downloads/reddit_traversal_network.csv"). \
+    #     remove_unconnected_nodes(). \
+    #     remove_self_loop(). \
+    #     pagerank(). \
+    #     save_to_graphml("../networks/reddit_traversal_network_pagerank.graphml")
+
     GraphPrep(
-        "/Users/danielkershaw/Downloads/twitter_geo_network.csv"). \
+        "/Users/kershad1/Downloads/twitter_mention_network.csv"). \
         remove_unconnected_nodes(). \
         remove_self_loop(). \
         pagerank(). \
-        save_to_graphml("../networks/twitter_geo_network_pagerank_directed.graphml")
+        save_to_graphml("../networks/twitter_mention_network_pagerank.graphml")
 
     # GraphPrep(
-    #     "/Users/kershad1/Downloads/reddit_traversal_network"). \
-    #     to_undriected(). \
+    #     "/Users/kershad1/Downloads/reddit_comment_network.csv"). \
     #     remove_unconnected_nodes(). \
     #     remove_self_loop(). \
-    #     detect_communities(). \
     #     pagerank(). \
-    #     save_to_pickle("../data/pickle/reddit_traversal_network_pagerank.gpickle")
-    #
-    # GraphPrep(
-    #     "/Users/kershad1/Downloads/twitter_mention_network"). \
-    #     to_undriected(). \
-    #     remove_unconnected_nodes(). \
-    #     remove_self_loop(). \
-    #     detect_communities(). \
-    #     pagerank(). \
-    #     save_to_pickle("../data/pickle/twitter_mention_network_pagerank.gpickle")
-    #
-    # GraphPrep(
-    #     "/Users/kershad1/Downloads/reddit_comment_network"). \
-    #     to_undriected(). \
-    #     remove_unconnected_nodes(). \
-    #     remove_self_loop(). \
-    #     detect_communities(). \
-    #     pagerank(). \
-    #     save_to_pickle("../data/pickle/reddit_comment_network_pagerank.gpickle")
+    #     save_to_graphml("../networks/reddit_comment_network_pagerank.graphml")

@@ -11,16 +11,17 @@ except ImportError:
     from urllib.parse import urlparse
 
 import pandas as pd
+
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
 from mrjob.step import MRStep
+
 import datetime
 import json
-import sklearn
-from sklearn.linear_model import LinearRegression
+
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import KFold
-from sklearn.cluster import KMeans
 
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
@@ -35,177 +36,92 @@ class MRJobPopularityRaw(MRJob):
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
 
-    #TODO get this so that it is read in from a file
     combinations = {
         "time":["time_step_mean","time_step_cv"],
         "basic":["surface","number_activated_users","number_activations"],
         "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"],
-        "time-cluster": ["time_step_mean", "time_step_cv","cluster"],
-        "basic-cluster": ["surface", "number_activated_users", "number_activations","cluster"],
-        "community-cluster": ["inffected_communities_normalised", "activation_entorpy", "activation_entorpy", "usage_dominace",
-                      "user_usage_dominance","cluster"],
-        "exposure-cluster": ["user_exposure_mean", "activateion_exposure_mean","cluster"],
-        "all-cluster": ["time_step_mean", "time_step_cv", "surface", "number_activated_users", "number_activations",
-                "inffected_communities_normalised", "activation_entorpy", "activation_entorpy", "usage_dominace",
-                "user_usage_dominance", "user_exposure_mean", "activateion_exposure_mean","cluster"]
-
+        "cascades":["wiener_index_avrage","number_of_trees"],
+        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
     }
 
-
-    combinations_no_c = {
-        "time":["time_step_mean","time_step_cv"],
-        "basic":["surface","number_activated_users","number_activations"],
-        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
-        "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        # "cascades":["wiener_index_avrage","number_of_trees"],
-        # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
-    }
-
-    target = ["user_target","activation_target"]
+    target = ["popularity_class","user_popularity_class"]
 
     def configure_options(self):
         super(MRJobPopularityRaw, self).configure_options()
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
         self.add_passthrough_option('--cluster', type='int', default=10, help='...')
-        self.add_passthrough_option('--folds', type='int', default=2, help='...')
-        self.add_passthrough_option('--day_from', type='int', default=15, help='...')
-        self.add_passthrough_option('--day_to', type='int', default=16, help='...')
-
+        self.add_passthrough_option('--folds', type='int', default=15, help='...')
+        self.add_passthrough_option('--classifier', type='string', default="logit_regression", help='...')
 
 
     def mapper(self, _, line):
-        print "x"
         df = pd.read_json(line["raw"])
         dfu, df = self.generate_tables(df)
 
         df['time'] = df['time'].apply(dt)
         df = df.set_index(pd.DatetimeIndex(df['time']))
 
-        df = df.resample('d').mean()
-        idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=self.options.day_to))
-        dfi = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
+        for kt in range(len(df)):
 
-        for kt in range(self.options.day_from, self.options.day_to):
-
-            dft = dfi[:kt]
+            #TODO redindex so that it is the first kt of the data frame,
+            dft = df.ix[:]
 
             dft["user_target"] = dft["number_activated_users"].values[-1]
             dft["activation_target"] = dft["number_activations"].values[-1]
 
             for k, v in dft.reset_index().iterrows():
-                if k > 0:
-                    pop = self.compute_popularity(dft, k)
-                    yield {"observations":k, "target":kt}, {"df": v.to_json(),
-                                        "word": line["file"].split("/")[-1],
-                                        "period": kt,
-                                        "popularity": pop[0],
-                                        "user_popularity": pop[1]}
+                    yield {"observations":k, "target":kt, "type":"popularity_class"}, {"df": v.to_json(),
+                                        "word": line["file"].split("/")[-1]}
 
-    def compute_popularity(self, df, days, resample_granularity = 'd'):
+        for kt in range(len(dfu)):
 
-        up = []
-        p = []
-        dft = df[["number_activations", "number_activated_users"]]
-        # dft = dft.resample(resample_granularity).max()
-        idx = pd.date_range(dft.index[0], dft.index[0] + datetime.timedelta(days=days))
-        dft = dft[:days]
+            #TODO redindex so that it is the first kt of the data frame,
+            dft = dfu.ix[:]
 
-        for x in range(1, days+1):
-            up.append((dft[:x]["number_activated_users"] / dft[:x]["number_activated_users"][-1]).mean())
-            p.append((dft[:x]["number_activations"] / dft[:x]["number_activations"][-1]).mean())
+            dft["user_target"] = dft["number_activated_users"].values[-1]
+            dft["activation_target"] = dft["number_activations"].values[-1]
 
-        return up, p
+            for k, v in dft.reset_index().iterrows():
+                    yield {"observations":k, "target":kt, "type":"user_popularity_class"}, {"df": v.to_json(),
+                                        "word": line["file"].split("/")[-1]}
 
-    def reducer(self, key, values):
+
+    def classifier(self, X):
+        if X > 5:
+            return True
+        else:
+            return False
+
+    def reducer_logit(self, key, values):
+
         df = {}
-        df_kmean = {}
-
         for v in values:
             df[v["word"]] = json.loads(v["df"])
-            df_kmean[v["word"]] = v["popularity"]
-
-        df = pd.DataFrame(df).T
-        df_kmean = pd.DataFrame(df_kmean).T
-
-        #Learn the cluster mebership upuntill this time
-        x_cols = df_kmean.columns
-        cluster = KMeans(n_clusters=2)
-        df_kmean['cluster'] = cluster.fit_predict(df_kmean[x_cols])
-
-        #join the cluster membership to the other metrics
-        df = df.join(df_kmean)
-        # print df
-        if len(df) > 1:
-            for k, v in self.combinations.iteritems():
-                for t in self.target:
-                    r = self.liniar_regression(df.fillna(0), features=v, target=t)
-
-                    yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"]}
-
-    def reducer_kmean(self, key, values):
-        #TODO compute the populaity K-Means class, this will be a cotogory valibal in the linear regression
-        df = {}
-        df_kmean = {}
-        df_kmean_user = {}
-
-        for v in values:
-            df[v["word"]] = json.loads(v["df"])
-            df_kmean[v["word"]] = v["popularity"]
-            df_kmean_user[v["word"]] = v["user_popularity"]
-
         df = pd.DataFrame(df).T.fillna(0)
-        df_kmean = pd.DataFrame(df_kmean).T.fillna(0)
-        df_kmean_user = pd.DataFrame(df_kmean_user).T.fillna(0)
-        popdict = {"frequency":df_kmean,"user":df_kmean_user}
-        #Learn the cluster mebership upuntill this time
-        x_cols = df_kmean.columns
-        #join the cluster membership to the other metrics
-        # print df
+
+        avr_pop = df["activation_target"].mean()
+        avr_user_pop = df["user_target"].mean()
+        #Todo use this in a map to create a new colum which indicates that
+        # it is either above or below the avrage target, for each
+        # the two colums would be
+        df["popularity_class"] = df["activation_target"].apply()
+        df["user_popularity_class"] = df["user_target"].apply()
+
         if len(df) > 1:
 
-            #Generate the kfolds
             kf = KFold(len(df), n_folds=self.options.folds, shuffle=True)
+            for train_index, test_index in kf:
+                for k, v in self.combinations.iteritems():
+                    X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
+                    Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
 
-            #which popularity kmeans to use
-            for popk, popv in popdict.iteritems():
-
-                #iterate though the indecides to test and train
-                for train_index, test_index in kf:
-                    # Get the K-means test and train data
-                    train_kmean = popv.ix[train_index, x_cols]
-                    test_kmean = popv.ix[test_index, x_cols]
-                    for cnum in range(2, self.options.cluster):
-
-                        cluster = KMeans(n_clusters=cnum)
-                        train_kmean['cluster'] = cluster.fit_predict(train_kmean)
-                        test_kmean['cluster'] = cluster.predict(test_kmean)
-
-                        test_kmean.fillna(0)
-                        train_kmean.fillna(0)
-
-                        for t in self.target:
-                            for k, v in self.combinations_no_c.iteritems():
-
-                                #Generate the test and train datsets
-                                X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
-                                Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
-
-                                for num in set(test_kmean['cluster'].values):
-                                    wor_train = train_kmean[(train_kmean["cluster"] == num)]
-                                    wor_test = test_kmean[(test_kmean["cluster"] == num)]
-                                    lm = LinearRegression(normalize=True)
-                                    if len(Y_train[(Y_train.index.isin(wor_train.index.values))]) > 0 and len(X_train[(X_train.index.isin(wor_train.index.values))]) > 0:
-
-                                        lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
-                                        r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
-
-                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
-
-
-
+                    for t in self.target:
+                        lm = LogisticRegression()
+                        if len(Y_train) > 0:
+                            lm.fit(X_train, Y_train)
+                            r = mean_squared_error(Y_test, lm.predict(X_test))
+                            yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"]}
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='number_activated_users', keep='first').set_index(
@@ -326,17 +242,10 @@ class MRJobPopularityRaw(MRJob):
             min_periods=1).var()
         return result_act, result_user
 
-
-    def liniar_regression(self, df, features = [], target = "" , nfolds = 15, scoring="mean_squared_error"):
-        kf = KFold(len(df), n_folds=nfolds, shuffle=True)
-        lm = LinearRegression(normalize=True)
-        scores = sklearn.cross_validation.cross_val_score(lm, df[features], df[target], scoring=scoring, cv=kf )
-        return scores.mean(), scores.var()
-
     def steps(self):
         return [MRStep(
             mapper=self.mapper,
-            reducer=self.reducer_kmean
+            reducer=self.reducer_logit
                )]
 
 if __name__ == '__main__':

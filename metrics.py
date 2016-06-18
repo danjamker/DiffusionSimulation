@@ -16,14 +16,25 @@ class metric(object):
 
     roleTypes = {
         "coordinator": lambda pred, broker, succ: pred == broker == succ,
-        "gatekeeper" 	 : lambda pred , broker ,succ: pred != broker == succ,"representative"	: lambda pred , broker , succ: pred == broker != succ,
+        "gatekeeper" 	 : lambda pred , broker ,succ: pred != broker == succ,
+        "representative"	: lambda pred , broker , succ: pred == broker != succ,
         "consultant"		:lambda pred , broker, succ: pred == succ != broker,
-        "liaison"		: lambdapred , broker ,succ: pred != succ and pred != broker and broker != succ,
+        "liaison"		: lambda pred , broker ,succ: pred != succ and pred != broker and broker != succ,
     }
 
-    def __init__(self, G):
+    def __init__(self, G, runDiamiter = True, group_name = "group", time_format = "%Y-%m-%d %H:%M:%S", edge_time_name = "createdat" ):
+
+        self.group_name = group_name
+        self.time_format = time_format
+        self.edge_time_name = edge_time_name
+
         self.G = G
-        self.Communities = list(set([attrdict['group'] for n, attrdict in self.G.node.items()]))
+
+        self.run_d = runDiamiter
+        if self.run_d is True:
+            self.ud = self.G.to_undirected()
+
+        self.Communities = list(set([attrdict[group_name] for n, attrdict in self.G.node.items()]))
         self.numberActivatedUsers = 0
         self.numberOfActivations = 0
         self.usagedominance = 0
@@ -42,13 +53,14 @@ class metric(object):
         self.ActivateionExposureArray = []
         self.UserExposureArray = []
         self.inffectedCommunities = 0
-        self.window = 100
         self.numberActivatedUsersnorm = 0
         self.numberOfNodes = nx.number_of_nodes(G)
+
         #Time
         self.time_dif_sequence = []
         self.current_time = None
         self.early_spread_time = 0
+
         #Diamiter
         self.diamiter = 0
 
@@ -58,13 +70,17 @@ class metric(object):
         self.surface_set = set()
 
         #Wiener
-        self.wiener_index_avrage = 0
-        self.number_of_trees = 0
+        self.wiener_index_list = []
         self.cascade_edges = 0
         self.cascade_nodes = 0
+
         # User metrics
         self.pagerank = 0
         self.degrees = 0
+
+        self.roles = { }
+        for k in self.roleTypes.iterkeys():
+            self.roles[k] = 0
 
         #Tag
         self.tag = []
@@ -75,8 +91,9 @@ class metric(object):
 
                 node = self.G.node[n]
                 self.sequence.append(n)
-                self.sequence_community.append(node["group"])
+                self.sequence_community.append(node[self.group_name])
                 self.sequence_time.append(step_time)
+
                 if "pagerank" in node:
                     self.pagerank = node["pagerank"]
                 self.degrees = self.G.degree(n)
@@ -84,11 +101,11 @@ class metric(object):
                 if node["activated"] == 1:
                     self.numberActivatedUsers += 1
                     self.numberActivatedUsersnorm = self.numberActivatedUsers / self.numberOfNodes
-                    self.activatedUsersPerCommunity[node["group"]] += 1
-                    self.activatedUsersPerCommunity[node["group"]] += 1
+                    self.activatedUsersPerCommunity[node[self.group_name]] += 1
+                    self.activatedUsersPerCommunity[node[self.group_name]] += 1
 
                 self.numberOfActivations += 1
-                self.activationsPerCommunity[node["group"]] += 1
+                self.activationsPerCommunity[node[self.group_name]] += 1
 
                 #Compute time diffrence if provided
                 if step_time != None:
@@ -131,29 +148,38 @@ class metric(object):
 
 
                 #Wiener indexx avrage
-                a = []
-                sg = self.cascade_extrator()
+                sg = self.cascade_extrator(self.G, self.sequence, edge_time_format="%Y-%m-%d")
                 for cc in list(nx.connected_component_subgraphs(sg.to_undirected())):
-                    a.append(self.wiener_index(cc.to_undirected()))
+                    self.wiener_index_list.append(self.wiener_index(cc.to_undirected()))
 
-                self.wiener_index_avrage = np.mean(a)
-                self.number_of_trees = len(a)
                 self.cascade_edges = nx.number_of_edges(sg)
                 self.cascade_nodes = nx.number_of_nodes(sg)
 
+                self.roles = self.extract_roles(sg)
 
-    def cascade_extrator(self, time_attribut="time"):
+                if self.run_d is True:
+                    dist = [0]
+                    for n1 in set(self.sequence):
+                        if n1 != n:
+                            try:
+                                dist.append(nx.shortest_path_length(self.ud, source=n, target=n1))
+                            except nx.NetworkXNoPath:
+                                pass
+                    if np.max(dist) > self.diamiter:
+                        self.diamiter = np.max(dist)
+
+    def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "createdat", edge_time_format = "%Y-%m-%d %H:%M:%S"):
         from datetime import datetime
-        sg = self.G.subgraph(set(self.sequence)).copy()
+        sg = G.subgraph(set(sequence)).copy()
 
         for s, t, d in sg.edges(data=True):
-            if ( sg.node[s][time_attribut] > sg.node[t][time_attribut] ) or sg.node[s][time_attribut] < datetime.strptime(d["created_at"],"%Y-%m-%d %H:%M:%S"):
+            if ( sg.node[s][node_time_attribute] > sg.node[t][node_time_attribute] ) or sg.node[s][node_time_attribute] < datetime.strptime(d[edge_time_attribute],edge_time_format):
                 sg.remove_edge(*(s,t))
 
         return sg
 
     def asMap(self):
-        return {"number_activated_users": self.numberActivatedUsers,
+        r = {"number_activated_users": self.numberActivatedUsers,
                 "number_activations": self.numberOfActivations,
                 "usage_dominace": self.usagedominance,
                 "user_usage_dominance": self.userUsageDominance,
@@ -170,11 +196,18 @@ class metric(object):
                 "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
-                "number_of_trees": self.number_of_trees,
-                "wiener_index_avrage": self.wiener_index_avrage,
+                "number_of_trees": len(self.wiener_index_list),
+                "wiener_index_avrage": np.mean(self.wiener_index_list),
+                "wiener_index_std": np.std(self.wiener_index_list),
                 "degree": self.degrees,
                 "cascade_nodes": self.cascade_nodes,
-                "cascade_edges": self.cascade_edges}
+                "cascade_edges": self.cascade_edges,
+                "diamiter": self.diamiter}
+
+        for k, v in self.roles.iteritems():
+            r[k] = v
+
+        return r
 
 
     def wiener_index(self, G, weight=None):
@@ -193,15 +226,24 @@ class metric(object):
     def to_JSON(self):
         return json.dumps(self.__dict__)
 
+
+    def extract_roles(self, sg):
+        roles = dict((n, dict((role, 0) for role in self.roleTypes)) for n in sg)
+        for node in sg:
+
+            for successor in sg.successors(node):
+                for predecessor in sg.predecessors(node):
+                    if successor == predecessor or successor == node or predecessor == node: continue
+                    if not (sg.has_edge(predecessor, successor)):
+                        # found a broker!
+                        # now which kind depends on who is in which group
+                        roles[node][brokerage._RoleClassifier.classify(sg.node[predecessor][self.attribute],
+                                                                       sg.node[node][self.attribute],
+                                                                       sg.node[successor][self.attribute])] += 1
+        return reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), roles.values())
+
 class broker_metrics(metric):
 
-    roleTypes = {
-        "coordinator"	: lambda pred ,broker ,succ: pred == broker == succ,
-        "gatekeeper" 	 	: lambda pred ,broker ,succ: pred != broker == succ,
-        "representative"	: lambda pred ,broker ,succ: pred == broker != succ,
-        "consultant"		: lambda pred ,broker ,succ: pred == succ != broker,
-        "liaison"			: lambda pred ,broker ,succ: pred != succ and pred != broker and broker != succ,
-        }
 
     def __init__(self, G, attribute):
         super(self.__class__, self).__init__(G)
@@ -212,20 +254,13 @@ class broker_metrics(metric):
         self.sequence.append(no)
         sg = self.cascade_extrator()
 
-        roles = dict((n, dict((role, 0) for role in self.roleTypes)) for n in sg)
-        for node in sg:
-
-            for successor in sg.successors(node):
-                for predecessor in sg.predecessors(node):
-                    if successor == predecessor or successor == node or predecessor == node: continue
-                    if not (sg.has_edge(predecessor, successor)):
-                        # found a broker!
-                        # now which kind depends on who is in which group
-                        roles[node][brokerage._RoleClassifier.classify(sg.node[predecessor][self.attribute], sg.node[node][self.attribute],
-                                                                       sg.node[successor][self.attribute])] += 1
+        roles = self.extract_roles(sg)
 
 
-        self.results = reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), roles.values())
+        self.results = roles
+
+
+        return roles
 
     def asMap(self):
         return self.results

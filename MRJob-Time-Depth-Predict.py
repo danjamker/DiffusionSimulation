@@ -72,7 +72,7 @@ class MRJobPopularityRaw(MRJob):
         self.add_passthrough_option('--cluster', type='int', default=10, help='...')
         self.add_passthrough_option('--folds', type='int', default=2, help='...')
         self.add_passthrough_option('--day_from', type='int', default=15, help='...')
-        self.add_passthrough_option('--day_to', type='int', default=16, help='...')
+        self.add_passthrough_option('--day_to', type='int', default=45, help='...')
 
 
 

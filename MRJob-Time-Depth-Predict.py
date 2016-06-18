@@ -77,7 +77,6 @@ class MRJobPopularityRaw(MRJob):
 
 
     def mapper(self, _, line):
-        print "x"
         df = pd.read_json(line["raw"])
         dfu, df = self.generate_tables(df)
 

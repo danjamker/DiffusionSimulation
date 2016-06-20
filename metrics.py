@@ -237,9 +237,9 @@ class metric(object):
                     if not (sg.has_edge(predecessor, successor)):
                         # found a broker!
                         # now which kind depends on who is in which group
-                        roles[node][brokerage._RoleClassifier.classify(sg.node[predecessor][self.attribute],
-                                                                       sg.node[node][self.attribute],
-                                                                       sg.node[successor][self.attribute])] += 1
+                        roles[node][brokerage._RoleClassifier.classify(sg.node[predecessor][self.group_name],
+                                                                       sg.node[node][self.group_name],
+                                                                       sg.node[successor][self.group_name])] += 1
         return reduce(lambda x, y: dict((k, v + y[k]) for k, v in x.iteritems()), roles.values())
 
 class broker_metrics(metric):

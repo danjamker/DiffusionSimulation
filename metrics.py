@@ -168,7 +168,7 @@ class metric(object):
                     if np.max(dist) > self.diamiter:
                         self.diamiter = np.max(dist)
 
-    def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "createdat", edge_time_format = "%Y-%m-%d %H:%M:%S"):
+    def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "created_at", edge_time_format = "%Y-%m-%d %H:%M:%S"):
         from datetime import datetime
         sg = G.subgraph(set(sequence)).copy()
 

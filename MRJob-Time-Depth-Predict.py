@@ -55,11 +55,13 @@ class MRJobPopularityRaw(MRJob):
 
 
     combinations_no_c = {
-        "time":["time_step_mean","time_step_cv"],
+        "time":["time_step_mean","time_step_cv","early_spread_time"],
         "basic":["surface","number_activated_users","number_activations"],
-        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
+        "community":["inffected_communities_normalised","activation_entorpy","user_usage_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        # "cascades":["wiener_index_avrage","number_of_trees"],
+        "cascades":["wiener_index_avrage","wiener_index_std","number_of_trees","cascade_edges","cascade_nodes"],
+        "distance":["diamiter"],
+        "broker":["gatekeeper","liaison","representative","coordinator","consultant"],
         # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
         "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
     }
@@ -72,7 +74,7 @@ class MRJobPopularityRaw(MRJob):
         self.add_passthrough_option('--cluster', type='int', default=10, help='...')
         self.add_passthrough_option('--folds', type='int', default=2, help='...')
         self.add_passthrough_option('--day_from', type='int', default=15, help='...')
-        self.add_passthrough_option('--day_to', type='int', default=45, help='...')
+        self.add_passthrough_option('--day_to', type='int', default=17, help='...')
 
 
 

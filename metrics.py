@@ -63,6 +63,7 @@ class metric(object):
 
         #Diamiter
         self.diamiter = 0
+        self.step_dist = 0
 
         #Surface
         self.surface_step = []
@@ -167,6 +168,9 @@ class metric(object):
                                 pass
                     if np.max(dist) > self.diamiter:
                         self.diamiter = np.max(dist)
+
+                if len(self.sequence) > 1:
+                    self.step_dist.append(nx.shortest_path_length(self.ud, source=self.sequence[-2], target=self.sequence[-2]))
 
     def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "created_at", edge_time_format = "%Y-%m-%d %H:%M:%S"):
         from datetime import datetime

@@ -204,7 +204,7 @@ class MRJobPopularityRaw(MRJob):
                                         lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
                                         r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
 
-                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "cluster_num":num, "popmessure":popk, "coef":lm.coef_}
+                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "cluster_num":num, "popmessure":popk}
 
 
 

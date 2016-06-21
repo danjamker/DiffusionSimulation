@@ -62,8 +62,9 @@ class MRJobPopularityRaw(MRJob):
         "cascades":["wiener_index_avrage","wiener_index_std","number_of_trees","cascade_edges","cascade_nodes"],
         "distance":["diamiter"],
         "broker":["gatekeeper","liaison","representative","coordinator","consultant"],
+        "all":["time_step_mean","time_step_cv","early_spread_time","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","user_usage_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","wiener_index_std","number_of_trees","cascade_edges","cascade_nodes","diamiter","gatekeeper","liaison","representative","coordinator","consultant"]
         # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
+        # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
     }
 
     target = ["user_target","activation_target"]
@@ -203,7 +204,7 @@ class MRJobPopularityRaw(MRJob):
                                         lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
                                         r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
 
-                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
+                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk, "coef":lm.coef_}
 
 
 

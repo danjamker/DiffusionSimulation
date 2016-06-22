@@ -46,6 +46,7 @@ class MRJobPopularityRaw(MRJob):
                                 "period": k}
 
 
+
     def reducer(self, key, values):
         d = []
         for v in values:

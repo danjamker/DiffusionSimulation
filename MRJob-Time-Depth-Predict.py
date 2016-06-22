@@ -21,7 +21,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import KFold
 from sklearn.cluster import KMeans
-
+import numpy as np
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
 
@@ -90,6 +90,9 @@ class MRJobPopularityRaw(MRJob):
         idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=self.options.day_to))
         dfi = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
+        dfi["user_pop"] = dfi["number_activated_users"].expanding(min_periods=1).apply(self.apply_pop)
+        dfi["activation_pop"] = dfi["number_activations"].expanding(min_periods=1).apply(self.apply_pop)
+
         for kt in range(self.options.day_from, self.options.day_to):
 
             dft = dfi[:kt]
@@ -97,17 +100,18 @@ class MRJobPopularityRaw(MRJob):
             dft["user_target"] = dft["number_activated_users"].values[-1]
             dft["activation_target"] = dft["number_activations"].values[-1]
 
+
             for k, v in dft.reset_index().iterrows():
                 if k > 0:
-                    pop = self.compute_popularity(dft, k)
+                    # pop = self.compute_popularity(dft, k)
                     yield {"observations":k, "target":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1],
                                         "period": kt,
-                                        "popularity": pop[0],
-                                        "user_popularity": pop[1]}
+                                        "popularity": v["activation_pop"],
+                                        "user_popularity": v["user_pop"]}
 
     def compute_popularity(self, df, days, resample_granularity = 'd'):
-
+        #TODO could this be changed into an expanding apply
         up = []
         p = []
         dft = df[["number_activations", "number_activated_users"]]
@@ -120,6 +124,9 @@ class MRJobPopularityRaw(MRJob):
             p.append((dft[:x]["number_activations"] / dft[:x]["number_activations"][-1]).mean())
 
         return up, p
+
+    def apply_pop(self, X):
+        return np.divide(X, X[-1]).mean()
 
     def reducer(self, key, values):
         df = {}
@@ -144,7 +151,6 @@ class MRJobPopularityRaw(MRJob):
             for k, v in self.combinations.iteritems():
                 for t in self.target:
                     r = self.liniar_regression(df.fillna(0), features=v, target=t)
-
                     yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"]}
 
     def reducer_kmean(self, key, values):

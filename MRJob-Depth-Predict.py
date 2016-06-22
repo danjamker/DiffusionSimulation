@@ -351,15 +351,15 @@ class MRJobPopularityRaw(MRJob):
         return result_act, result_user
 
     def steps(self):
-        # return [MRStep(
-        #     mapper=self.mapper,
-        #     reducer=self.reducer_logit
-        #        )]
-
         return [MRStep(
-            mapper=self.mapper_time,
-            reducer=self.reducer_logit_time
-        )]
+            mapper=self.mapper,
+            reducer=self.reducer_logit
+               )]
+
+        # return [MRStep(
+        #     mapper=self.mapper_time,
+        #     reducer=self.reducer_logit_time
+        # )]
 
 if __name__ == '__main__':
     MRJobPopularityRaw.run()

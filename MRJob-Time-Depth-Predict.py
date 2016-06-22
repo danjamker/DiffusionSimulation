@@ -97,8 +97,8 @@ class MRJobPopularityRaw(MRJob):
 
             dft = dfi[:kt]
 
-            dft["user_target"] = dft["number_activated_users"].values[-1]
-            dft["activation_target"] = dft["number_activations"].values[-1]
+            dft["user_target"] = dfi["number_activated_users"].values[-1]
+            dft["activation_target"] = dfi["number_activations"].values[-1]
 
 
             for k, v in dft.reset_index().iterrows():

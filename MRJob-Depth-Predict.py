@@ -108,10 +108,10 @@ class MRJobPopularityRaw(MRJob):
 
         for k, v in df.reset_index().iterrows():
             for kt in range(self.options.day_from, self.options.day_to):
-                dft = dfi[:kt]
+                # dft = dfi[:kt]
 
-                v["user_target"] = dft["number_activated_users"].values[-1]
-                v["activation_target"] = dft["number_activations"].values[-1]
+                v["user_target"] = dfi["number_activated_users"].values[kt]
+                v["activation_target"] = dfi["number_activations"].values[kt]
 
                 yield {"observations":k, "type":["popularity_class"], "period":kt}, {"df": v.to_json(),
                                     "word": line["file"].split("/")[-1]}
@@ -123,10 +123,10 @@ class MRJobPopularityRaw(MRJob):
 
         for k, v in dfu.reset_index().iterrows():
             for kt in range(self.options.day_from, self.options.day_to):
-                dft = dfi[:kt]
+                # dft = dfi[:kt]
 
-                v["user_target"] = dft["number_activated_users"].values[-1]
-                v["activation_target"] = dft["number_activations"].values[-1]
+                v["user_target"] = dfi["number_activated_users"].values[kt]
+                v["activation_target"] = dfi["number_activations"].values[kt]
 
                 yield {"observations":k, "type":["user_popularity_class"], "period":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1]}
@@ -155,8 +155,11 @@ class MRJobPopularityRaw(MRJob):
 
         if len(df) > 1:
             for t in key["type"]:
-
-                kf = StratifiedKFold(df[t].values, n_folds=self.options.folds, shuffle=True)
+                if self.options.folds > len(df[t].values):
+                    f = len(df[t].values)
+                else:
+                    f = self.options.folds
+                kf = StratifiedKFold(df[t].values, n_folds=f, shuffle=True)
                 for train_index, test_index in kf:
                     for k, v in self.combinations.iteritems():
                         X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
@@ -184,8 +187,11 @@ class MRJobPopularityRaw(MRJob):
 
         if len(df) > 1:
             for t in key["type"]:
-
-                kf = StratifiedKFold(df[t].values, n_folds=self.options.folds, shuffle=True)
+                if self.options.folds > len(df[t].values):
+                    f = len(df[t].values)
+                else:
+                    f = self.options.folds
+                kf = StratifiedKFold(df[t].values, n_folds=f, shuffle=True)
                 for train_index, test_index in kf:
                     for k, v in self.combinations.iteritems():
                         X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
@@ -345,15 +351,15 @@ class MRJobPopularityRaw(MRJob):
         return result_act, result_user
 
     def steps(self):
-        return [MRStep(
-            mapper=self.mapper,
-            reducer=self.reducer_logit
-               )]
-        #
         # return [MRStep(
-        #     mapper=self.mapper_time,
-        #     reducer=self.reducer_logit_time
-        # )]
+        #     mapper=self.mapper,
+        #     reducer=self.reducer_logit
+        #        )]
+
+        return [MRStep(
+            mapper=self.mapper_time,
+            reducer=self.reducer_logit_time
+        )]
 
 if __name__ == '__main__':
     MRJobPopularityRaw.run()

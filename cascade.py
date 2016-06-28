@@ -255,7 +255,7 @@ class actualCascade(cascade):
         dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
                           compression=None, names=["word", "tag", "node", "time"]).drop_duplicates(subset=["time"],
                                                                                             keep='last')
-        dtf['time'] = pd.to_datetime(dtf['time'])
+        dtf['time'] = pd.to_datetime(dtf['time'], dayfirst=True)
         # Filters out users that are not in the network
         dftt = dtf[dtf["node"].isin(self.G.nodes())]
         self.df = dftt.set_index(pd.DatetimeIndex(dftt["time"])).sort_index();

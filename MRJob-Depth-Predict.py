@@ -229,7 +229,7 @@ class MRJobPopularityRaw(MRJob):
                         lm.fit(X_train, Y_train)
                         r = mean_squared_error(Y_test, lm.predict(X_test))
                         # yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "cluster_num":int(num), "popmessure":popk, "conf":lm.coef_.tolist()}
-                        
+
 
 
     def generate_tables(self, df):

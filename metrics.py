@@ -22,7 +22,7 @@ class metric(object):
         "liaison"		: lambda pred , broker ,succ: pred != succ and pred != broker and broker != succ,
     }
 
-    def __init__(self, G, runDiamiter = True, group_name = "group", time_format = "%Y-%m-%d %H:%M:%S", edge_time_name = "createdat", reciprical=False):
+    def __init__(self, G, runDiamiter = True, group_name = "group", time_format = "%Y-%m-%d %H:%M:%S", edge_time_name = "created_at", reciprical=False):
 
         self.group_name = group_name
         self.time_format = time_format
@@ -203,7 +203,7 @@ class metric(object):
             depth.append(max(nx.shortest_path_length(cc, n).values()))
         return depth
 
-    def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "createdat", edge_time_format = "%Y-%m-%d %H:%M:%S"):
+    def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "created_at", edge_time_format = "%Y-%m-%d %H:%M:%S"):
         from datetime import datetime
         sg = G.subgraph(set(sequence)).copy()
 

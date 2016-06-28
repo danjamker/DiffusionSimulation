@@ -21,7 +21,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.cross_validation import KFold
 from sklearn.cluster import KMeans
-
+import numpy as np
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
 
@@ -55,13 +55,16 @@ class MRJobPopularityRaw(MRJob):
 
 
     combinations_no_c = {
-        "time":["time_step_mean","time_step_cv"],
+        "time":["time_step_mean","time_step_cv","early_spread_time"],
         "basic":["surface","number_activated_users","number_activations"],
-        "community":["inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance"],
+        "community":["inffected_communities_normalised","activation_entorpy","user_usage_entorpy","usage_dominace","user_usage_dominance"],
         "exposure":["user_exposure_mean", "activateion_exposure_mean"],
-        # "cascades":["wiener_index_avrage","number_of_trees"],
+        "cascades":["wiener_index_avrage","wiener_index_std","number_of_trees","cascade_edges","cascade_nodes"],
+        "distance":["diamiter"],
+        "broker":["gatekeeper","liaison","representative","coordinator","consultant"],
+        "all":["time_step_mean","time_step_cv","early_spread_time","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","user_usage_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","wiener_index_std","number_of_trees","cascade_edges","cascade_nodes","diamiter","gatekeeper","liaison","representative","coordinator","consultant"]
         # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
-        "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
+        # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
     }
 
     target = ["user_target","activation_target"]
@@ -69,8 +72,8 @@ class MRJobPopularityRaw(MRJob):
     def configure_options(self):
         super(MRJobPopularityRaw, self).configure_options()
         self.add_passthrough_option('--avrage', type='int', default=0, help='...')
-        self.add_passthrough_option('--cluster', type='int', default=10, help='...')
-        self.add_passthrough_option('--folds', type='int', default=2, help='...')
+        self.add_passthrough_option('--cluster', type='int', default=5, help='...')
+        self.add_passthrough_option('--folds', type='int', default=10, help='...')
         self.add_passthrough_option('--day_from', type='int', default=15, help='...')
         self.add_passthrough_option('--day_to', type='int', default=45, help='...')
 
@@ -87,24 +90,28 @@ class MRJobPopularityRaw(MRJob):
         idx = pd.date_range(df.index[0], df.index[0] + datetime.timedelta(days=self.options.day_to))
         dfi = df.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
 
+        dfi["user_pop"] = dfi["number_activated_users"].expanding(min_periods=1).apply(self.apply_pop)
+        dfi["activation_pop"] = dfi["number_activations"].expanding(min_periods=1).apply(self.apply_pop)
+
         for kt in range(self.options.day_from, self.options.day_to):
 
             dft = dfi[:kt]
 
-            dft["user_target"] = dft["number_activated_users"].values[-1]
-            dft["activation_target"] = dft["number_activations"].values[-1]
+            dft["user_target"] = dfi["number_activated_users"].values[-1]
+            dft["activation_target"] = dfi["number_activations"].values[-1]
+
 
             for k, v in dft.reset_index().iterrows():
                 if k > 0:
-                    pop = self.compute_popularity(dft, k)
+                    # pop = self.compute_popularity(dft, k)
                     yield {"observations":k, "target":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1],
                                         "period": kt,
-                                        "popularity": pop[0],
-                                        "user_popularity": pop[1]}
+                                        "popularity": v["activation_pop"],
+                                        "user_popularity": v["user_pop"]}
 
     def compute_popularity(self, df, days, resample_granularity = 'd'):
-
+        #TODO could this be changed into an expanding apply
         up = []
         p = []
         dft = df[["number_activations", "number_activated_users"]]
@@ -117,6 +124,9 @@ class MRJobPopularityRaw(MRJob):
             p.append((dft[:x]["number_activations"] / dft[:x]["number_activations"][-1]).mean())
 
         return up, p
+
+    def apply_pop(self, X):
+        return np.divide(X, X[-1]).mean()
 
     def reducer(self, key, values):
         df = {}
@@ -141,7 +151,6 @@ class MRJobPopularityRaw(MRJob):
             for k, v in self.combinations.iteritems():
                 for t in self.target:
                     r = self.liniar_regression(df.fillna(0), features=v, target=t)
-
                     yield None, {"observation_level": key["observations"], "result_mean": r[0],  "result_var": r[1], "combination":k, "target":t, "target-day":key["target"]}
 
     def reducer_kmean(self, key, values):
@@ -200,8 +209,8 @@ class MRJobPopularityRaw(MRJob):
 
                                         lm.fit(X_train[(X_train.index.isin(wor_train.index.values))], Y_train[(Y_train.index.isin(wor_train.index.values))])
                                         r = mean_squared_error(Y_test[(Y_test.index.isin(wor_test.index.values))], lm.predict(X_test[(X_test.index.isin(wor_test.index.values))]))
+                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "cluster_num":int(num), "popmessure":popk, "conf":lm.coef_.tolist()}
 
-                                        yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"],"clusters":cnum, "popmessure":popk}
 
 
 

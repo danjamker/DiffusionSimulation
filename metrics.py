@@ -65,6 +65,7 @@ class metric(object):
         self.diamiter = 0
         self.step_dist = []
 
+
         #Surface
         self.surface_step = []
         self.surface = 0

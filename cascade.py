@@ -22,6 +22,7 @@ class cascade:
         self.a = set([n for n, attrdict in self.G.node.items() if attrdict['activated'] > 0])
         self.iterations = itterations
         self.step_time = None
+        self.tag = "a"
 
     def __iter__(self):
         return self
@@ -65,6 +66,9 @@ class cascade:
     def getStepTime(self):
         return self.step_time
 
+
+    def getTag(self):
+        return self.tag
 
 class randomModel(cascade):
     def next(self):
@@ -244,8 +248,12 @@ class actualCascade(cascade):
         self.step = 1
         self.d = {}
         self.activated = ""
+        # dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
+        #                   compression=None, names=["word", "node", "time"]).drop_duplicates(subset=["time"],
+        #                                                                                     keep='last')
+
         dtf = pd.read_csv(file, index_col=False, header=None, sep="\t", engine="python",
-                          compression=None, names=["word", "node", "time"]).drop_duplicates(subset=["time"],
+                          compression=None, names=["word", "tag", "node", "time"]).drop_duplicates(subset=["time"],
                                                                                             keep='last')
         dtf['time'] = pd.to_datetime(dtf['time'])
         # Filters out users that are not in the network
@@ -255,6 +263,7 @@ class actualCascade(cascade):
 
         # self.name_to_id = dict((d["name"], n) for n, d in self.G.nodes_iter(data=True))
         self.name_to_id = dict((n, n) for n, d in self.G.nodes_iter(data=True))
+        self.tag = "a"
 
     def next(self):
         try:
@@ -262,6 +271,7 @@ class actualCascade(cascade):
             self.activated_name = activate[1]["node"]
             self.step_time = activate[1]["time"]
             self.activated = self.name_to_id[self.activated_name]
+            # self.tag = activate[1]["tag"]
             if self.G.has_node(self.name_to_id[self.activated]):
                 nx.set_node_attributes(self.G, 'activated',
                                        {self.activated: self.G.node[self.activated]['activated'] + 1})

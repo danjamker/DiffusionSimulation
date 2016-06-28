@@ -33,11 +33,11 @@ class MRJobNetworkX(MRJob):
         cas = C
         idx = []
         values = []
-        met = metrics.metric(cas.getGraph())
+        met = metrics.metric(cas.getGraph(), time_format="%Y-%m-%d")
         while True:
             try:
                 cas.next()
-                met.add(cas.getInfectedNode(), cas.getStepTime())
+                met.add(cas.getInfectedNode(), cas.getStepTime(), cas.getTag())
                 values.append(met.asMap())
                 idx.append(cas.getStep())
             except StopIteration:

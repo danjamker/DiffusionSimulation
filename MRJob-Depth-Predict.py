@@ -121,7 +121,7 @@ class MRJobPopularityRaw(MRJob):
                         if len(Y_train) > 0:
                             lm.fit(X_train, Y_train)
                             r = mean_squared_error(Y_test, lm.predict(X_test))
-                            yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"]}
+                            yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "target_level": key["target"], "coef_":lm.coef_}
 
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='number_activated_users', keep='first').set_index(

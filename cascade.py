@@ -271,7 +271,7 @@ class actualCascade(cascade):
             self.activated_name = activate[1]["node"]
             self.step_time = activate[1]["time"]
             self.activated = self.name_to_id[self.activated_name]
-            # self.tag = activate[1]["tag"]
+            self.tag = activate[1]["tag"]
             if self.G.has_node(self.name_to_id[self.activated]):
                 nx.set_node_attributes(self.G, 'activated',
                                        {self.activated: self.G.node[self.activated]['activated'] + 1})

@@ -22,7 +22,7 @@ class metric(object):
         "liaison"		: lambda pred , broker ,succ: pred != succ and pred != broker and broker != succ,
     }
 
-    def __init__(self, G, runDiamiter = True, group_name = "group", time_format = "%Y-%m-%d %H:%M:%S", edge_time_name = "created_at", reciprical=False):
+    def __init__(self, G, runDiamiter = True, group_name = "group", time_format = "%d%b%Y:%H:%M:%S.%f", edge_time_name = "created_at", reciprical=False):
 
         self.group_name = group_name
         self.time_format = time_format
@@ -189,7 +189,10 @@ class metric(object):
                 if len(self.sequence) == 1:
                     self.step_dist.append(0)
                 else:
-                    self.step_dist.append(nx.shortest_path_length(self.ud, source=self.sequence[-1], target=self.sequence[-2]))
+                    try:
+                        self.step_dist.append(nx.shortest_path_length(self.ud, source=self.sequence[-1], target=self.sequence[-2]))
+                    except nx.NetworkXNoPath:
+                        pass
 
     def depth_distribution(self, sg, node_time_attribute="time"):
         depth = []
@@ -200,7 +203,11 @@ class metric(object):
                     n = nt
                     t = sg.node[nt][node_time_attribute]
 
-            depth.append(max(nx.shortest_path_length(cc, n).values()))
+            try:
+                depth.append(max(nx.shortest_path_length(cc, n).values()))
+            except nx.NetworkXNoPath:
+                pass
+
         return depth
 
     def cascade_extrator(self, G, sequence, node_time_attribute="time", edge_time_attribute = "created_at", edge_time_format = "%Y-%m-%d %H:%M:%S"):

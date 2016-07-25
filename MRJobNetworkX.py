@@ -28,12 +28,14 @@ class MRJobNetworkX(MRJob):
     def configure_options(self):
         super(MRJobNetworkX, self).configure_options()
         self.add_file_option('--network')
+        self.add_passthrough_option('--datetimeformat', type='string', default="%d%b%Y:%H:%M:%S.%f", help="...")
 
     def runCascade(self, C):
         cas = C
         idx = []
         values = []
-        met = metrics.metric(cas.getGraph(), time_format="%Y-%m-%d")
+        # met = metrics.metric(cas.getGraph(), time_format="%Y-%m-%d")
+        met = metrics.metric(cas.getGraph(), time_format=self.options.datetimeformat)
         while True:
             try:
                 cas.next()

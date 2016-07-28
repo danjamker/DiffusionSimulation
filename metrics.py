@@ -246,14 +246,19 @@ class metric(object):
         nodes = set(nx.nodes(ordered_cascades[0]))
 
         for c in ordered_cascades[1:]:
-            tmp_path = None
+            tmp_path = []
             for n in nx.nodes(larger_cascade):
                 for n2 in nx.nodes(c):
-                    tmp = nx.shortest_path(G, n, n2)
-                    if tmp_path is not None and len(tmp) < len(tmp_path):
-                        tmp_path = tmp
-                    elif tmp_path is None:
-                        tmp_path = tmp
+                    #todo fix this so that there are no errors here,
+                    try:
+                        tmp = nx.shortest_path(G, n, n2)
+                        if len(tmp_path) != 0 and len(tmp) < len(tmp_path):
+                            tmp_path = tmp
+                        elif len(tmp_path) == 0:
+                            tmp_path = tmp
+                    except nx.NetworkXNoPath:
+                        pass
+
 
             path_length.append(len(tmp_path))
             path_list.append(tmp_path)

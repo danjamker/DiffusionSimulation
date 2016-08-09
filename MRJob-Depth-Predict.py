@@ -39,28 +39,43 @@ class MRJobPopularityRaw(MRJob):
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
 
+   #  combinations = {
+   #      "time": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv"],
+   #      "basic": ["surface", "number_activated_users", "number_activations", "surface_mean","surface_cv","surface_var"],
+   #      "community": ["inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
+   #                    "user_usage_dominance"],
+   #      "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
+   #                   "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv"],
+   #      "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv"],
+   #      "topology": ["degree_mean","degree_median", "degree_cv", "degree_var",
+   #                   "constraint_mean","constraint_median","constraint_var","constraint_cv",
+   #                      "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv"],
+   #      "all": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv",
+   #              "surface", "number_activated_users", "number_activations", "surface_mean", "surface_cv", "surface_var",
+   #              "inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
+   #              "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
+   #                   "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "diamiter",
+   #              "step_distance_mean", "step_distance_median", "step_distance_var", "step_distance_cv",
+   #              "degree_mean","degree_median", "degree_cv", "degree_var",
+   #                   "constraint_mean","constraint_median","constraint_var","constraint_cv",
+   #                      "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv",
+   #              ]
+   # }
+
     combinations = {
-        "time": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv"],
-        "basic": ["surface", "number_activated_users", "number_activations", "surface_mean","surface_cv","surface_var"],
+        "time": ["time_step_mean", "time_step_cv"],
+        "basic": ["surface", "number_activated_users", "number_activations"],
         "community": ["inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
                       "user_usage_dominance"],
-        "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
-                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv"],
-        "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv"],
-        "topology": ["degree_mean","degree_median", "degree_cv", "degree_var",
-                     "constraint_mean","constraint_median","constraint_var","constraint_cv",
-                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv"],
-        "all": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv",
-                "surface", "number_activated_users", "number_activations", "surface_mean", "surface_cv", "surface_var",
-                "inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
-                "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
-                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "diamiter",
-                "step_distance_mean", "step_distance_median", "step_distance_var", "step_distance_cv",
-                "degree_mean","degree_median", "degree_cv", "degree_var",
-                     "constraint_mean","constraint_median","constraint_var","constraint_cv",
-                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv",
-                ]
-   }
+        "exposure": ["user_exposure_mean", "user_exposure_cv",
+                     "activateion_exposure_mean", "activateion_exposure_cv"],
+        "distance": ["diamiter", "step_distance_mean", "step_distance_cv"],
+        "topology": ["degree_mean", "degree_cv",
+                     "constraint_mean", "constraint_cv",
+                     "pagerank_mean", "pagerank_cv"]
+    }
+
+    combinations["all"] = combinations["time"] + combinations["basic"] + combinations["community"] + combinations["exposure"] + combinations["distance"] +combinations["topology"]
 
     target = ["popularity_class","user_popularity_class"]
 

@@ -24,6 +24,7 @@ from sklearn.metrics import mean_squared_error,accuracy_score
 from sklearn.cross_validation import KFold
 from sklearn.linear_model import LinearRegression
 from sklearn.cross_validation import StratifiedKFold
+from sklearn.feature_extraction import DictVectorizer
 
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))
@@ -39,22 +40,27 @@ class MRJobPopularityRaw(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
 
     combinations = {
-        "time": ["time_step_mean", "time_step_cv", "early_spread_time"],
-        "basic": ["surface", "number_activated_users", "number_activations"],
-        "community": ["inffected_communities_normalised", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
+        "time": ["time_step", "time_step_mean", "time_step_median","time_step_max","time_step_min","time_step_var","time_step_cv"],
+        "basic": ["surface", "number_activated_users", "number_activations", "surface_mean","surface_cv","surface_var"],
+        "community": ["inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
                       "user_usage_dominance"],
-        "exposure": ["user_exposure_mean", "activateion_exposure_mean"],
-        "cascades": ["wiener_index_avrage", "wiener_index_std", "number_of_trees", "cascade_edges", "cascade_nodes"],
-        "distance": ["diamiter"],
-        "broker": ["gatekeeper", "liaison", "representative", "coordinator", "consultant"],
-        "all": ["time_step_mean", "time_step_cv", "early_spread_time", "surface", "number_activated_users",
-                "number_activations", "inffected_communities_normalised", "activation_entorpy", "user_usage_entorpy",
-                "usage_dominace", "user_usage_dominance", "user_exposure_mean", "activateion_exposure_mean",
-                "wiener_index_avrage", "wiener_index_std", "number_of_trees", "cascade_edges", "cascade_nodes",
-                "diamiter", "gatekeeper", "liaison", "representative", "coordinator", "consultant"]
-        # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean","wiener_index_avrage","number_of_trees"]
-        # "all":["time_step_mean","time_step_cv","surface","number_activated_users","number_activations","inffected_communities_normalised","activation_entorpy","activation_entorpy","usage_dominace","user_usage_dominance","user_exposure_mean", "activateion_exposure_mean"]
-    }
+        "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv", "user_exposure_min", "user_exposure_max",
+                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "activateion_exposure_min", "activateion_exposure_max"],
+        "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv","step_distance_max","step_distance_min"],
+        "topology": ["degree_mean","degree_median","degree_min", "degree_max", "degree_cv", "degree_var",
+                     "constraint_mean","constraint_median","constraint_var","constraint_cv","constraint_max","constraint_min",
+                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv", "pagerank_max", "pagerank_min"],
+        "all": ["time_step", "time_step_mean", "time_step_median","time_step_max","time_step_min","time_step_var","time_step_cv",
+                "surface", "number_activated_users", "number_activations", "surface_mean", "surface_cv", "surface_var",
+                "inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
+                "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv", "user_exposure_min", "user_exposure_max",
+                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "activateion_exposure_min", "activateion_exposure_max", "diamiter",
+                "step_distance_mean", "step_distance_median", "step_distance_var", "step_distance_cv",
+                "step_distance_max", "step_distance_min","degree_mean","degree_median","degree_min", "degree_max", "degree_cv", "degree_var",
+                     "constraint_mean","constraint_median","constraint_var","constraint_cv","constraint_max","constraint_min",
+                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv", "pagerank_max", "pagerank_min"
+                ]
+   }
 
     target = ["popularity_class","user_popularity_class"]
 
@@ -166,6 +172,7 @@ class MRJobPopularityRaw(MRJob):
                         Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
                         lm = LogisticRegression()
                         if len(set(Y_train)) > 1 and len(X_train) > 1 and len(X_test) > 1 and len(set(Y_test)) > 1:
+
                             lm.fit(X_train, Y_train)
                             r = accuracy_score(Y_test, lm.predict(X_test))
                             yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "conf":lm.coef_.tolist(), "time":key["period"]}
@@ -185,16 +192,24 @@ class MRJobPopularityRaw(MRJob):
         df["popularity_class"] = df["activation_target"].apply(self.classifier, args=(avr_pop,))
         df["user_popularity_class"] = df["user_target"].apply(self.classifier, args=(avr_user_pop,))
 
+
+        df_t = df[["popularity_class","user_popularity_class"]]
+
         if len(df) > 1:
             for t in key["type"]:
                 if self.options.folds > len(df[t].values):
                     f = len(df[t].values)
                 else:
                     f = self.options.folds
-                kf = StratifiedKFold(df[t].values, n_folds=f, shuffle=True)
+                print df_t[[t]]
+                kf = StratifiedKFold(df_t[t].values, n_folds=f, shuffle=True)
                 for train_index, test_index in kf:
                     for k, v in self.combinations.iteritems():
-                        X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
+
+                        vec = DictVectorizer(sparse=False)
+                        X = vec.fit_transform(df.drop('popularity_class', 1).drop('user_popularity_class', 1)[v].to_dict('records'))
+
+                        X_train, X_test = X[train_index], X[test_index]
                         Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
                         lm = LogisticRegression()
                         if len(set(Y_train)) > 1 and len(X_train) > 1 and len(X_test) > 1 and len(set(Y_test)) > 1:
@@ -235,27 +250,36 @@ class MRJobPopularityRaw(MRJob):
     def generate_tables(self, df):
         result_user = df.drop_duplicates(subset='number_activated_users', keep='first').set_index(
             ['number_activated_users'], verify_integrity=True, drop=False).sort_index()
+
         result_user["surface_mean"] = result_user["surface"].expanding(min_periods=1).mean()
         result_user["surface_cv"] = result_user["surface"].expanding(min_periods=1).std()
         result_user["surface_var"] = result_user["surface"].expanding(min_periods=1).var()
+
         result_user["degree_mean"] = result_user["degree"].expanding(min_periods=1).mean()
         result_user["degree_median"] = result_user["degree"].expanding(min_periods=1).median()
         result_user["degree_cv"] = result_user["degree"].expanding(min_periods=1).std()
         result_user["degree_var"] = result_user["degree"].expanding(min_periods=1).var()
         result_user["degree_max"] = result_user["degree"].expanding(min_periods=1).max()
         result_user["degree_min"] = result_user["degree"].expanding(min_periods=1).min()
+
+        result_user["step_distance_mean"] = result_user["step_distance"].expanding(min_periods=1).mean()
+        result_user["step_distance_median"] = result_user["step_distance"].expanding(min_periods=1).median()
+        result_user["step_distance_cv"] = result_user["step_distance"].expanding(min_periods=1).std()
+        result_user["step_distance_var"] = result_user["step_distance"].expanding(min_periods=1).var()
+        result_user["step_distance_max"] = result_user["step_distance"].expanding(min_periods=1).max()
+        result_user["step_distance_min"] = result_user["step_distance"].expanding(min_periods=1).min()
+
         result_user["user_exposure_mean"] = result_user["user_exposure"].expanding(min_periods=1).mean()
         result_user["user_exposure_cv"] = result_user["user_exposure"].expanding(min_periods=1).std()
         result_user["user_exposure_var"] = result_user["user_exposure"].expanding(min_periods=1).var()
         result_user["user_exposure_median"] = result_user["user_exposure"].expanding(min_periods=1).median()
-        result_user["user_exposure_min"] = result_user["user_exposure"].expanding(min_periods=1).max()
-        result_user["user_exposure_mean"] = result_user["user_exposure"].expanding(min_periods=1).min()
+        result_user["user_exposure_max"] = result_user["user_exposure"].expanding(min_periods=1).max()
+        result_user["user_exposure_min"] = result_user["user_exposure"].expanding(min_periods=1).min()
+
         result_user["activateion_exposure_mean"] = result_user["activateion_exposure"].expanding(
             min_periods=1).mean()
         result_user["activateion_exposure_cv"] = result_user["activateion_exposure"].expanding(
             min_periods=1).std()
-        result_user["activateion_exposure_var"] = result_user["activateion_exposure"].expanding(
-            min_periods=1).var()
         result_user["activateion_exposure_var"] = result_user["activateion_exposure"].expanding(
             min_periods=1).var()
         result_user["activateion_exposure_median"] = result_user["activateion_exposure"].expanding(
@@ -264,12 +288,21 @@ class MRJobPopularityRaw(MRJob):
             min_periods=1).max()
         result_user["activateion_exposure_min"] = result_user["activateion_exposure"].expanding(
             min_periods=1).min()
+
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()
         result_user["pagerank_var"] = result_user["pagerank"].expanding(min_periods=1).var()
         result_user["pagerank_median"] = result_user["pagerank"].expanding(min_periods=1).median()
-        result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).max()
-        result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).min()
+        result_user["pagerank_max"] = result_user["pagerank"].expanding(min_periods=1).max()
+        result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).min()
+
+        result_user["constraint_mean"] = result_user["constraint"].expanding(min_periods=1).mean()
+        result_user["constraint_cv"] = result_user["constraint"].expanding(min_periods=1).std()
+        result_user["constraint_var"] = result_user["constraint"].expanding(min_periods=1).var()
+        result_user["constraint_median"] = result_user["constraint"].expanding(min_periods=1).median()
+        result_user["constraint_max"] = result_user["constraint"].expanding(min_periods=1).max()
+        result_user["constraint_min"] = result_user["constraint"].expanding(min_periods=1).min()
+
         result_user["time_step"] = result_user["time"].diff()
         result_user["time_step_mean"] = (result_user["time_step"]).expanding(
             min_periods=1).mean()
@@ -302,13 +335,19 @@ class MRJobPopularityRaw(MRJob):
         result_act["degree_max"] = result_act["degree"].expanding(min_periods=1).max()
         result_act["degree_min"] = result_act["degree"].expanding(min_periods=1).min()
 
+        result_act["step_distance_mean"] = result_act["step_distance"].expanding(min_periods=1).mean()
+        result_act["step_distance_median"] = result_act["step_distance"].expanding(min_periods=1).median()
+        result_act["step_distance_cv"] = result_act["step_distance"].expanding(min_periods=1).std()
+        result_act["step_distance_var"] = result_act["step_distance"].expanding(min_periods=1).var()
+        result_act["step_distance_max"] = result_act["step_distance"].expanding(min_periods=1).max()
+        result_act["step_distance_min"] = result_act["step_distance"].expanding(min_periods=1).min()
+
+
         #Activation exposure setup
         result_act["activateion_exposure_mean"] = result_act["activateion_exposure"].expanding(
             min_periods=1).mean()
         result_act["activateion_exposure_cv"] = result_act["activateion_exposure"].expanding(
             min_periods=1).std()
-        result_act["activateion_exposure_var"] = result_act["activateion_exposure"].expanding(
-            min_periods=1).var()
         result_act["activateion_exposure_var"] = result_act["activateion_exposure"].expanding(
             min_periods=1).var()
         result_act["activateion_exposure_median"] = result_act["activateion_exposure"].expanding(
@@ -323,17 +362,25 @@ class MRJobPopularityRaw(MRJob):
         result_act["user_exposure_cv"] = result_act["user_exposure"].expanding(min_periods=1).std()
         result_act["user_exposure_var"] = result_act["user_exposure"].expanding(min_periods=1).var()
         result_act["user_exposure_median"] = result_act["user_exposure"].expanding(min_periods=1).median()
-        result_act["user_exposure_min"] = result_act["user_exposure"].expanding(min_periods=1).max()
-        result_act["user_exposure_mean"] = result_act["user_exposure"].expanding(min_periods=1).min()
+        result_act["user_exposure_max"] = result_act["user_exposure"].expanding(min_periods=1).max()
+        result_act["user_exposure_min"] = result_act["user_exposure"].expanding(min_periods=1).min()
 
         #Pagerank setup
         result_act["pagerank_mean"] = result_act["pagerank"].expanding(min_periods=1).mean()
         result_act["pagerank_cv"] = result_act["pagerank"].expanding(min_periods=1).std()
         result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
-        result_act["pagerank_var"] = result_act["pagerank"].expanding(min_periods=1).var()
         result_act["pagerank_median"] = result_act["pagerank"].expanding(min_periods=1).median()
         result_act["pagerank_max"] = result_act["pagerank"].expanding(min_periods=1).max()
         result_act["pagerank_min"] = result_act["pagerank"].expanding(min_periods=1).min()
+
+        #constraint setup
+        result_act["constraint_mean"] = result_act["constraint"].expanding(min_periods=1).mean()
+        result_act["constraint_cv"] = result_act["constraint"].expanding(min_periods=1).std()
+        result_act["constraint_var"] = result_act["constraint"].expanding(min_periods=1).var()
+        result_act["constraint_median"] = result_act["constraint"].expanding(min_periods=1).median()
+        result_act["constraint_max"] = result_act["constraint"].expanding(min_periods=1).max()
+        result_act["constraint_min"] = result_act["constraint"].expanding(min_periods=1).min()
+
 
         #Time step setup
         result_act["time_step"] = result_act["time"].diff()
@@ -352,15 +399,15 @@ class MRJobPopularityRaw(MRJob):
         return result_act, result_user
 
     def steps(self):
-        # return [MRStep(
-        #     mapper=self.mapper,
-        #     reducer=self.reducer_logit
-        #        )]
-
         return [MRStep(
-            mapper=self.mapper_time,
-            reducer=self.reducer_logit_time
-        )]
+            mapper=self.mapper,
+            reducer=self.reducer_logit
+               )]
+
+        # return [MRStep(
+        #     mapper=self.mapper_time,
+        #     reducer=self.reducer_logit_time
+        # )]
 
 if __name__ == '__main__':
     MRJobPopularityRaw.run()

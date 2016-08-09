@@ -247,12 +247,21 @@ class MRJobPopularityRaw(MRJob):
             min_periods=1).max()
         result_user["activateion_exposure_min"] = result_user["activateion_exposure"].expanding(
             min_periods=1).min()
+
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).mean()
         result_user["pagerank_cv"] = result_user["pagerank"].expanding(min_periods=1).std()
         result_user["pagerank_var"] = result_user["pagerank"].expanding(min_periods=1).var()
         result_user["pagerank_median"] = result_user["pagerank"].expanding(min_periods=1).median()
         result_user["pagerank_min"] = result_user["pagerank"].expanding(min_periods=1).max()
         result_user["pagerank_mean"] = result_user["pagerank"].expanding(min_periods=1).min()
+
+        result_user["constraint_mean"] = result_user["constraint"].expanding(min_periods=1).mean()
+        result_user["constraint_cv"] = result_user["constraint"].expanding(min_periods=1).std()
+        result_user["constraint_var"] = result_user["constraint"].expanding(min_periods=1).var()
+        result_user["constraint_median"] = result_user["constraint"].expanding(min_periods=1).median()
+        result_user["constraint_min"] = result_user["constraint"].expanding(min_periods=1).max()
+        result_user["constraint_mean"] = result_user["constraint"].expanding(min_periods=1).min()
+
         result_user["time_step"] = result_user["time"].diff()
         result_user["time_step_mean"] = (result_user["time_step"]).expanding(
             min_periods=1).mean()
@@ -317,6 +326,15 @@ class MRJobPopularityRaw(MRJob):
         result_act["pagerank_median"] = result_act["pagerank"].expanding(min_periods=1).median()
         result_act["pagerank_max"] = result_act["pagerank"].expanding(min_periods=1).max()
         result_act["pagerank_min"] = result_act["pagerank"].expanding(min_periods=1).min()
+
+        #constraint setup
+        result_act["constraint_mean"] = result_act["constraint"].expanding(min_periods=1).mean()
+        result_act["constraint_cv"] = result_act["constraint"].expanding(min_periods=1).std()
+        result_act["constraint_var"] = result_act["constraint"].expanding(min_periods=1).var()
+        result_act["constraint_var"] = result_act["constraint"].expanding(min_periods=1).var()
+        result_act["constraint_median"] = result_act["constraint"].expanding(min_periods=1).median()
+        result_act["constraint_max"] = result_act["constraint"].expanding(min_periods=1).max()
+        result_act["constraint_min"] = result_act["constraint"].expanding(min_periods=1).min()
 
         #Time step setup
         result_act["time_step"] = result_act["time"].diff()

@@ -40,25 +40,25 @@ class MRJobPopularityRaw(MRJob):
     OUTPUT_PROTOCOL = JSONValueProtocol
 
     combinations = {
-        "time": ["time_step", "time_step_mean", "time_step_median","time_step_max","time_step_min","time_step_var","time_step_cv"],
+        "time": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv"],
         "basic": ["surface", "number_activated_users", "number_activations", "surface_mean","surface_cv","surface_var"],
         "community": ["inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
                       "user_usage_dominance"],
-        "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv", "user_exposure_min", "user_exposure_max",
-                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "activateion_exposure_min", "activateion_exposure_max"],
-        "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv","step_distance_max","step_distance_min"],
-        "topology": ["degree_mean","degree_median","degree_min", "degree_max", "degree_cv", "degree_var",
-                     "constraint_mean","constraint_median","constraint_var","constraint_cv","constraint_max","constraint_min",
-                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv", "pagerank_max", "pagerank_min"],
-        "all": ["time_step", "time_step_mean", "time_step_median","time_step_max","time_step_min","time_step_var","time_step_cv",
+        "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
+                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv"],
+        "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv"],
+        "topology": ["degree_mean","degree_median", "degree_cv", "degree_var",
+                     "constraint_mean","constraint_median","constraint_var","constraint_cv",
+                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv"],
+        "all": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv",
                 "surface", "number_activated_users", "number_activations", "surface_mean", "surface_cv", "surface_var",
                 "inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
-                "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv", "user_exposure_min", "user_exposure_max",
-                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "activateion_exposure_min", "activateion_exposure_max", "diamiter",
+                "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
+                     "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "diamiter",
                 "step_distance_mean", "step_distance_median", "step_distance_var", "step_distance_cv",
-                "step_distance_max", "step_distance_min","degree_mean","degree_median","degree_min", "degree_max", "degree_cv", "degree_var",
-                     "constraint_mean","constraint_median","constraint_var","constraint_cv","constraint_max","constraint_min",
-                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv", "pagerank_max", "pagerank_min"
+                "degree_mean","degree_median", "degree_cv", "degree_var",
+                     "constraint_mean","constraint_median","constraint_var","constraint_cv",
+                        "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv",
                 ]
    }
 

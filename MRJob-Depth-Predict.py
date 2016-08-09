@@ -201,7 +201,7 @@ class MRJobPopularityRaw(MRJob):
                     f = len(df[t].values)
                 else:
                     f = self.options.folds
-                print df_t[[t]]
+
                 kf = StratifiedKFold(df_t[t].values, n_folds=f, shuffle=True)
                 for train_index, test_index in kf:
                     for k, v in self.combinations.iteritems():

@@ -85,6 +85,7 @@ class metric(object):
 
         # User metrics
         self.pagerank = 0
+        self.constraint = 0
         self.degrees = 0
 
         self.roles = { }
@@ -105,6 +106,9 @@ class metric(object):
                 self.sequence_Induced_Degree.append(len(set(self.sequence).union(self.G.neighbors(n))))
                 if "pagerank" in node:
                     self.pagerank = node["pagerank"]
+
+                if "constraint" in node:
+                    self.constraint = node["constraint"]
                 self.degrees = self.G.degree(n)
                 self.tag = tag
 
@@ -159,21 +163,21 @@ class metric(object):
 
                 #Wiener indexx avrage
                 # "%Y-%m-%d"
-                self.sg = self.cascade_extrator(self.G, self.sequence, edge_time_format=self.time_format, edge_time_attribute=self.edge_time_name)
-                sg_ud = self.sg.to_undirected(reciprocal=self.recip)
-                sg_con = list(nx.connected_component_subgraphs(sg_ud))
-                self.sg_numnodes = [nx.number_of_nodes(xz) for xz in sg_con]
-                self.wiener_index_list = [self.wiener_index(cc) for cc in sg_con]
-                self.fm = self.forest_metrics(sg_con, self.ud)
-                self.broadcast_count = len([z for z in self.depth_distribution(self.sg) if z == 1])
-
-                self.cascade_edges = nx.number_of_edges(self.sg)
-                self.cascade_nodes = nx.number_of_nodes(self.sg)
-                self.vpi_list = [self.vpi(x,self.G) for x in sg_con]
-                self.deg1 = [x for x in list(self.sg.degree().values()) if x == 1]
-                self.roles = self.extract_roles(self.sg)
-                self.forest_density = np.divide(nx.number_of_edges(self.sg),(nx.number_of_nodes(self.sg) * (nx.number_of_nodes(self.sg) -1)))
-                self.LargestTreeProp = np.divide(max(self.sg_numnodes), self.cascade_nodes)
+                # self.sg = self.cascade_extrator(self.G, self.sequence, edge_time_format=self.time_format, edge_time_attribute=self.edge_time_name)
+                # sg_ud = self.sg.to_undirected(reciprocal=self.recip)
+                # sg_con = list(nx.connected_component_subgraphs(sg_ud))
+                # self.sg_numnodes = [nx.number_of_nodes(xz) for xz in sg_con]
+                # self.wiener_index_list = [self.wiener_index(cc) for cc in sg_con]
+                # self.fm = self.forest_metrics(sg_con, self.ud)
+                # self.broadcast_count = len([z for z in self.depth_distribution(self.sg) if z == 1])
+                #
+                # self.cascade_edges = nx.number_of_edges(self.sg)
+                # self.cascade_nodes = nx.number_of_nodes(self.sg)
+                # self.vpi_list = [self.vpi(x,self.G) for x in sg_con]
+                # self.deg1 = [x for x in list(self.sg.degree().values()) if x == 1]
+                # self.roles = self.extract_roles(self.sg)
+                # self.forest_density = np.divide(nx.number_of_edges(self.sg),(nx.number_of_nodes(self.sg) * (nx.number_of_nodes(self.sg) -1)))
+                # self.LargestTreeProp = np.divide(max(self.sg_numnodes), self.cascade_nodes)
 
                 if self.run_d is True:
                     dist = [0]
@@ -299,28 +303,29 @@ class metric(object):
                 "number_activated_users_normalised": self.numberActivatedUsersnorm,
                 "early_spread_time": self.early_spread_time,
                 "pagerank": self.pagerank,
-                "number_of_trees": len(self.wiener_index_list),
-                "wiener_index_avrage": np.mean(self.wiener_index_list),
-                "wiener_index_std": np.std(self.wiener_index_list),
+                "constraint": self.constraint,
+                # "number_of_trees": len(self.wiener_index_list),
+                # "wiener_index_avrage": np.mean(self.wiener_index_list),
+                # "wiener_index_std": np.std(self.wiener_index_list),
                 "degree": self.degrees,
-                "cascade_nodes": self.cascade_nodes,
-                "cascade_edges": self.cascade_edges,
+                # "cascade_nodes": self.cascade_nodes,
+                # "cascade_edges": self.cascade_edges,
                 "diamiter": self.diamiter,
-                "vpi": np.mean(self.vpi_list),
-                "largets_tree": max(self.sg_numnodes),
-                "iso_trees": len([x for x in self.sg_numnodes if x == 1]),
-                "three_trees": len([x for x in self.sg_numnodes if x > 3]),
-                "forest_uc_connector_path_node_count":self.fm[1],
-                "forest_uc_connector_path_edge_count": self.fm[2],
-                "forest_uc_node_ratio": self.fm[3],
-                "forest_uc_degree2": self.fm[4],
-                "forest_uc_triangels": self.fm[5],
-                "forest_uc_mean_path_length": self.fm[6],
-                "forest_uc_dencity": self.fm[7],
-                "forest_deg1": self.deg1,
-                "forest_dencity":self.forest_density,
-                "forest_broadcast_count": self.broadcast_count,
-                "forest_largestTreeProp": self.LargestTreeProp,
+                # "vpi": np.mean(self.vpi_list),
+                # "largets_tree": max(self.sg_numnodes),
+                # "iso_trees": len([x for x in self.sg_numnodes if x == 1]),
+                # "three_trees": len([x for x in self.sg_numnodes if x > 3]),
+                # "forest_uc_connector_path_node_count":self.fm[1],
+                # "forest_uc_connector_path_edge_count": self.fm[2],
+                # "forest_uc_node_ratio": self.fm[3],
+                # "forest_uc_degree2": self.fm[4],
+                # "forest_uc_triangels": self.fm[5],
+                # "forest_uc_mean_path_length": self.fm[6],
+                # "forest_uc_dencity": self.fm[7],
+                # "forest_deg1": self.deg1,
+                # "forest_dencity":self.forest_density,
+                # "forest_broadcast_count": self.broadcast_count,
+                # "forest_largestTreeProp": self.LargestTreeProp,
                 "step_distance": self.step_dist[-1],
                 "tag":self.tag
              }

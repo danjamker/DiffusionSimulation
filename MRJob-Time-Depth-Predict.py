@@ -118,13 +118,13 @@ class MRJobPopularityRaw(MRJob):
 
 
             for k, v in dft.reset_index().iterrows():
-                if k > 0:
+                if k > 1:
                     # pop = self.compute_popularity(dft, k)
                     yield {"observations":k, "target":kt}, {"df": v.to_json(),
                                         "word": line["file"].split("/")[-1],
                                         "period": kt,
-                                        "popularity": v["activation_pop"],
-                                        "user_popularity": v["user_pop"]}
+                                        "popularity": dfi[:k]["activation_pop"].tolist(),
+                                        "user_popularity": dfi[:k]["user_pop"].tolist()}
 
     def compute_popularity(self, df, days, resample_granularity = 'd'):
         #TODO could this be changed into an expanding apply
@@ -201,7 +201,7 @@ class MRJobPopularityRaw(MRJob):
                     # Get the K-means test and train data
                     train_kmean = popv.ix[train_index, x_cols]
                     test_kmean = popv.ix[test_index, x_cols]
-                    for cnum in range(2, self.options.cluster):
+                    for cnum in range(2, self.options.cluster+1):
 
                         cluster = KMeans(n_clusters=cnum)
                         train_kmean['cluster'] = cluster.fit_predict(train_kmean)

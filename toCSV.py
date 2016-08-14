@@ -28,7 +28,7 @@ class toCSV(MRJob):
         dfu, df = self.generate_tables(df)
 
         for index, row in dfu.iterrows():
-            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"]]
+            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], len(dfu)]
             yield None, ','.join([str(i) for i in v])
 
     def steps(self):

@@ -25,7 +25,7 @@ class toCSV(MRJob):
 
     def mapper(self, key, value):
         df = pd.read_json(value["raw"])
-        dfu, df = self.generate_tables(df)
+        dfa, dfu = self.generate_tables(df)
 
         for index, row in dfu.iterrows():
             v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], len(dfu)]

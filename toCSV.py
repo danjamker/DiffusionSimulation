@@ -14,21 +14,19 @@ import pandas as pd
 
 from mrjob.job import MRJob
 from mrjob.protocol import JSONValueProtocol
-from mrjob.protocol import TextValueProtocol
+from mrjob.protocol import TextProtocol
 from mrjob.step import MRStep
-import StringIO
+
 class toCSV(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
-    OUTPUT_PROTOCOL = TextValueProtocol
+    OUTPUT_PROTOCOL = TextProtocol
 
     def mapper(self, key, value):
         df = pd.read_json(value["raw"])
 
         for index, row in df.iterrows():
             v = [index, value["name"]] + list(row.values)
-            print index
-            print ','.join([str(i) for i in v])
             yield None, ','.join([str(i) for i in v])
 
     def steps(self):

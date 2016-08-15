@@ -36,7 +36,6 @@ def to_date(X):
     return X.day()
 
 def tag_entro(X):
-    # print Counter(X).values()
     return entropy(Counter(X).values())
 
 class MRJobPopularityRaw(MRJob):
@@ -303,7 +302,6 @@ class MRJobPopularityRaw(MRJob):
 
         v = []
         for i in range(0, len(result_user["tag"])):
-            print result_user["tag"].values[0:i+1]
             v.append(tag_entro(result_user["tag"].values[0:i+1]))
         result_user["tag_entropy"] = pd.Series(v)
 
@@ -387,7 +385,6 @@ class MRJobPopularityRaw(MRJob):
 
         v = []
         for i in range(0, len(result_act["tag"])):
-            print result_act["tag"].values[0:i+1]
             v.append(tag_entro(result_act["tag"].values[0:i+1]))
         result_act["tag_entropy"] = pd.Series(v)
 

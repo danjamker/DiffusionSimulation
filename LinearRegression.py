@@ -31,22 +31,14 @@ class toCSV(MRJob):
     OUTPUT_PROTOCOL = TextProtocol
 
     def mapper(self, key, value):
+        
         df = pd.read_json(value["raw"])
         dfu, dfa = self.generate_tables(df)
 
         for index, row in dfu.iterrows():
-            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], row["tag_entropy"], len(dfu)]
-            yield None, ','.join([str(i) for i in v])
+            yield index, (row["constraint_mean"], row["activation_entorpy"])
 
-    def mapper_corrolation(self, key, value):
-
-        df = pd.read_json(value["raw"])
-        dfu, dfa = self.generate_tables(df)
-
-        for index, row in dfu.iterrows():
-            yield index, (row["constraint_mean"], row["activation_entropy"])
-
-    def redducer(self, key, value):
+    def reducer(self, key, value):
 
         X = []
         Y = []
@@ -65,7 +57,8 @@ class toCSV(MRJob):
 
     def steps(self):
         return [MRStep(
-            mapper=self.mapper
+            mapper=self.mapper,
+            reducer=self.reducer
                )]
 
 

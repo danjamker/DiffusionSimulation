@@ -72,10 +72,13 @@ class MRJobPopularityRaw(MRJob):
 
     def mapper(self, _, line):
         df = pd.read_json(line["raw"])
-        dfu, df = self.generate_tables(df)
+
+        #todo I think this is the wrong way around.
+        dfa, dfu = self.generate_tables(df)
 
         df['time'] = df['time'].apply(dt)
         df = df.set_index(pd.DatetimeIndex(df['time']))
+
         dfu['time'] = dfu['time'].apply(dt)
         dfu = dfu.set_index(pd.DatetimeIndex(dfu['time']))
 
@@ -83,56 +86,17 @@ class MRJobPopularityRaw(MRJob):
         df["user_target"] = df["number_activated_users"].values[-1]
         df["activation_target"] = df["number_activations"].values[-1]
 
-        for k, v in df.reset_index().iterrows():
-                yield {"observations":k, "type":["popularity_class"]}, {"df": v.to_json(),
-                                    "word": line["file"].split("/")[-1]}
-
-
         dfu["user_target"] = dfu["number_activated_users"].values[-1]
         dfu["activation_target"] = dfu["number_activations"].values[-1]
+
+
+        for k, v in dfu.reset_index().iterrows():
+                yield {"observations":k, "type":["popularity_class"]}, {"df": v.to_json(),
+                                    "word": line["file"].split("/")[-1]}
 
         for k, v in dfu.reset_index().iterrows():
                 yield {"observations":k, "type":["user_popularity_class"]}, {"df": v.to_json(),
                                     "word": line["file"].split("/")[-1]}
-
-    def mapper_time(self, _, line):
-        df = pd.read_json(line["raw"])
-        dfu, df = self.generate_tables(df)
-
-        df['time'] = df['time'].apply(dt)
-        df = df.set_index(pd.DatetimeIndex(df['time']))
-
-        dfu['time'] = dfu['time'].apply(dt)
-        dfu = dfu.set_index(pd.DatetimeIndex(dfu['time']))
-
-        dfre = df.resample('d').mean()
-        idx = pd.date_range(dfre.index[0], dfre.index[0] + datetime.timedelta(days=self.options.day_to))
-        dfi = dfre.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
-
-        for k, v in df.reset_index().iterrows():
-            for kt in range(self.options.day_from, self.options.day_to):
-                # dft = dfi[:kt]
-
-                v["user_target"] = dfi["number_activated_users"].values[kt]
-                v["activation_target"] = dfi["number_activations"].values[kt]
-
-                yield {"observations":k, "type":["popularity_class"], "period":kt}, {"df": v.to_json(),
-                                    "word": line["file"].split("/")[-1]}
-
-
-        dfure = dfu.resample('d').mean()
-        idx = pd.date_range(dfure.index[0], dfure.index[0] + datetime.timedelta(days=self.options.day_to))
-        dfi = dfure.reindex(idx, fill_value=0, method='ffill').fillna(method='ffill')
-
-        for k, v in dfu.reset_index().iterrows():
-            for kt in range(self.options.day_from, self.options.day_to):
-                # dft = dfi[:kt]
-
-                v["user_target"] = dfi["number_activated_users"].values[kt]
-                v["activation_target"] = dfi["number_activations"].values[kt]
-
-                yield {"observations":k, "type":["user_popularity_class"], "period":kt}, {"df": v.to_json(),
-                                        "word": line["file"].split("/")[-1]}
 
 
     def classifier(self, X, avr):
@@ -141,39 +105,6 @@ class MRJobPopularityRaw(MRJob):
         else:
             return False
 
-    def reducer_logit_time(self, key, values):
-
-        df = {}
-        for v in values:
-            df[v["word"]] = json.loads(v["df"])
-        df = pd.DataFrame(df).T.fillna(0)
-
-        avr_pop = df["activation_target"].mean()
-        avr_user_pop = df["user_target"].mean()
-        #Todo use this in a map to create a new colum which indicates that
-        # it is either above or below the avrage target, for each
-        # the two colums would be
-        df["popularity_class"] = df["activation_target"].apply(self.classifier, args=(avr_pop,))
-        df["user_popularity_class"] = df["user_target"].apply(self.classifier, args=(avr_user_pop,))
-
-        if len(df) > 1:
-            for t in key["type"]:
-                if self.options.folds > len(df[t].values):
-                    f = len(df[t].values)
-                else:
-                    f = self.options.folds
-                kf = StratifiedKFold(df[t].values, n_folds=f, shuffle=True)
-                for train_index, test_index in kf:
-                    for k, v in self.combinations.iteritems():
-                        X_train, X_test = df.ix[train_index, v], df.ix[test_index, v]
-                        Y_train, Y_test = df.ix[train_index, t], df.ix[test_index, t]
-                        lm = LogisticRegression()
-                        if len(set(Y_train)) > 1 and len(X_train) > 1 and len(X_test) > 1 and len(set(Y_test)) > 1:
-
-                            lm.fit(X_train, Y_train)
-                            r = accuracy_score(Y_test, lm.predict(X_test))
-                            yield None, {"observation_level": key["observations"], "result": r, "combination":k, "target":t, "conf":lm.coef_.tolist(), "time":key["period"]}
-
     def reducer_logit(self, key, values):
 
         df = {}
@@ -181,13 +112,13 @@ class MRJobPopularityRaw(MRJob):
             df[v["word"]] = json.loads(v["df"])
         df = pd.DataFrame(df).T.fillna(0)
 
-        avr_pop = df["activation_target"].mean()
-        avr_user_pop = df["user_target"].mean()
+        median_pop = df["activation_target"].median()
+        median_user_pop = df["user_target"].median()
         #Todo use this in a map to create a new colum which indicates that
         # it is either above or below the avrage target, for each
         # the two colums would be
-        df["popularity_class"] = df["activation_target"].apply(self.classifier, args=(avr_pop,))
-        df["user_popularity_class"] = df["user_target"].apply(self.classifier, args=(avr_user_pop,))
+        df["popularity_class"] = df["activation_target"].apply(self.classifier, args=(median_pop,))
+        df["user_popularity_class"] = df["user_target"].apply(self.classifier, args=(median_user_pop,))
 
 
         df_t = df[["popularity_class","user_popularity_class"]]

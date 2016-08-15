@@ -25,6 +25,8 @@ from sklearn.cross_validation import KFold
 from sklearn.linear_model import LinearRegression
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.feature_extraction import DictVectorizer
+from scipy.stats import entropy
+from collections import Counter
 
 def dt(X):
     return datetime.datetime.fromtimestamp(float(X / 1000))

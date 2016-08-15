@@ -32,10 +32,10 @@ class toCSV(MRJob):
 
     def mapper(self, key, value):
         df = pd.read_json(value["raw"])
-        dfu, dfa = self.generate_tables(df)
+        dfa, dfu = self.generate_tables(df)
 
-        for index, row in dfu.iterrows():
-            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], row["tag_entropy"], len(dfu)]
+        for index, row in dfa.iterrows():
+            v = [index, np.divide(float(index), len(dfa)), value["name"], row["constraint_mean"], row["constraint_var"], row["tag_entropy"], len(dfa)]
             yield None, ','.join([str(i) for i in v])
 
     def mapper_corrolation(self, key, value):

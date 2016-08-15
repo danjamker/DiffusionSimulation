@@ -33,10 +33,10 @@ class toCSV(MRJob):
     def mapper(self, key, value):
         
         df = pd.read_json(value["raw"])
-        dfu, dfa = self.generate_tables(df)
+        dfa, dfu = self.generate_tables(df)
 
-        for index, row in dfu.iterrows():
-            yield index, (row["constraint_mean"], row["activation_entorpy"])
+        for index, row in dfu.fillna(0).iterrows():
+            yield index, (row["constraint_mean"], row["community_entropy"])
 
     def reducer(self, key, value):
 
@@ -50,9 +50,9 @@ class toCSV(MRJob):
         regr = linear_model.LinearRegression()
 
         # Train the model using the training sets
-        regr.fit(X, Y)
+        regr.fit(np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1)))
 
-        yield None, ','.join([key, regr.coef_])
+        yield None, ','.join([str(key), str(regr.coef_[0][0])])
 
 
     def steps(self):
@@ -137,6 +137,11 @@ class toCSV(MRJob):
             v.append(tag_entro(result_user["tag"].values[0:i+1]))
         result_user["tag_entropy"] = pd.Series(v)
 
+        v = []
+        for i in range(0, len(result_user["community"])):
+            v.append(tag_entro(result_user["community"].values[0:i+1]))
+        result_user["community_entropy"] = pd.Series(v)
+
 
         # index on the number of activations
         result_act = df.drop_duplicates(subset='number_activations', keep='first').set_index(
@@ -197,6 +202,11 @@ class toCSV(MRJob):
         for i in range(0, len(result_act["tag"])):
             v.append(tag_entro(result_act["tag"].values[0:i+1]))
         result_act["tag_entropy"] = pd.Series(v)
+
+        v = []
+        for i in range(0, len(result_act["community"])):
+            v.append(tag_entro(result_act["community"].values[0:i+1]))
+            result_act["community_entropy"] = pd.Series(v)
 
 
         # constraint setup

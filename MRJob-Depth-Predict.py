@@ -33,34 +33,14 @@ def dt(X):
 def to_date(X):
     return X.day()
 
+def tag_entro(X):
+    # print Counter(X).values()
+    return entropy(Counter(X).values())
 
 class MRJobPopularityRaw(MRJob):
 
     INPUT_PROTOCOL = JSONValueProtocol
     OUTPUT_PROTOCOL = JSONValueProtocol
-
-   #  combinations = {
-   #      "time": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv"],
-   #      "basic": ["surface", "number_activated_users", "number_activations", "surface_mean","surface_cv","surface_var"],
-   #      "community": ["inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
-   #                    "user_usage_dominance"],
-   #      "exposure": ["user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
-   #                   "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv"],
-   #      "distance": ["diamiter", "step_distance_mean","step_distance_median","step_distance_var","step_distance_cv"],
-   #      "topology": ["degree_mean","degree_median", "degree_cv", "degree_var",
-   #                   "constraint_mean","constraint_median","constraint_var","constraint_cv",
-   #                      "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv"],
-   #      "all": ["time_step", "time_step_mean", "time_step_median","time_step_var","time_step_cv",
-   #              "surface", "number_activated_users", "number_activations", "surface_mean", "surface_cv", "surface_var",
-   #              "inffected_communities", "activation_entorpy", "user_usage_entorpy", "usage_dominace",
-   #              "user_usage_dominance","user_exposure_mean", "user_exposure_median", "user_exposure_var", "user_exposure_cv",
-   #                   "activateion_exposure_mean", "activateion_exposure_median", "activateion_exposure_var", "activateion_exposure_cv", "diamiter",
-   #              "step_distance_mean", "step_distance_median", "step_distance_var", "step_distance_cv",
-   #              "degree_mean","degree_median", "degree_cv", "degree_var",
-   #                   "constraint_mean","constraint_median","constraint_var","constraint_cv",
-   #                      "pagerank_mean", "pagerank_median", "pagerank_var", "pagerank_cv",
-   #              ]
-   # }
 
     combinations = {
         "time": ["time_step_mean", "time_step_cv"],
@@ -72,10 +52,11 @@ class MRJobPopularityRaw(MRJob):
         "distance": ["diamiter", "step_distance_mean", "step_distance_cv"],
         "topology": ["degree_mean", "degree_cv",
                      "constraint_mean", "constraint_cv",
-                     "pagerank_mean", "pagerank_cv"]
+                     "pagerank_mean", "pagerank_cv"],
+        "semantic": ["tag_entropy"]
     }
 
-    combinations["all"] = combinations["time"] + combinations["basic"] + combinations["community"] + combinations["exposure"] + combinations["distance"] +combinations["topology"]
+    combinations["all"] = combinations["time"] + combinations["basic"] + combinations["community"] + combinations["exposure"] + combinations["distance"] + combinations["topology"] + combinations["semantic"]
 
     target = ["popularity_class","user_popularity_class"]
 
@@ -318,6 +299,12 @@ class MRJobPopularityRaw(MRJob):
         result_user["constraint_max"] = result_user["constraint"].expanding(min_periods=1).max()
         result_user["constraint_min"] = result_user["constraint"].expanding(min_periods=1).min()
 
+        v = []
+        for i in range(0, len(result_user["tag"])):
+            print result_user["tag"].values[0:i+1]
+            v.append(tag_entro(result_user["tag"].values[0:i+1]))
+        result_user["tag_entropy"] = pd.Series(v)
+
         result_user["time_step"] = result_user["time"].diff()
         result_user["time_step_mean"] = (result_user["time_step"]).expanding(
             min_periods=1).mean()
@@ -396,6 +383,11 @@ class MRJobPopularityRaw(MRJob):
         result_act["constraint_max"] = result_act["constraint"].expanding(min_periods=1).max()
         result_act["constraint_min"] = result_act["constraint"].expanding(min_periods=1).min()
 
+        v = []
+        for i in range(0, len(result_act["tag"])):
+            print result_act["tag"].values[0:i+1]
+            v.append(tag_entro(result_act["tag"].values[0:i+1]))
+        result_act["tag_entropy"] = pd.Series(v)
 
         #Time step setup
         result_act["time_step"] = result_act["time"].diff()

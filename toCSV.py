@@ -17,6 +17,13 @@ from mrjob.protocol import JSONValueProtocol
 from mrjob.protocol import TextProtocol
 from mrjob.step import MRStep
 import numpy as np
+from scipy.stats import entropy
+from collections import Counter
+
+def tag_entro(X):
+    # print Counter(X).values()
+    return entropy(Counter(X).values())
+
 
 class toCSV(MRJob):
 
@@ -25,10 +32,10 @@ class toCSV(MRJob):
 
     def mapper(self, key, value):
         df = pd.read_json(value["raw"])
-        dfa, dfu = self.generate_tables(df)
+        dfu, dfa = self.generate_tables(df)
 
         for index, row in dfu.iterrows():
-            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], len(dfu)]
+            v = [index, np.divide(float(index), len(dfu)), value["name"], row["constraint_mean"], row["constraint_var"], row["tag_entropy"], len(dfu)]
             yield None, ','.join([str(i) for i in v])
 
     def steps(self):
@@ -160,6 +167,14 @@ class toCSV(MRJob):
         result_act["pagerank_median"] = result_act["pagerank"].expanding(min_periods=1).median()
         result_act["pagerank_max"] = result_act["pagerank"].expanding(min_periods=1).max()
         result_act["pagerank_min"] = result_act["pagerank"].expanding(min_periods=1).min()
+
+
+        v = []
+        for i in range(0, len(result_act["tag"])):
+            print result_act["tag"].values[0:i+1]
+            v.append(tag_entro(result_act["tag"].values[0:i+1]))
+        result_act["tag_entropy"] = pd.Series(v)
+
 
         # constraint setup
         result_act["constraint_mean"] = result_act["constraint"].expanding(min_periods=1).mean()

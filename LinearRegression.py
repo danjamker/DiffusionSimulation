@@ -36,7 +36,7 @@ class toCSV(MRJob):
         df = pd.read_json(value["raw"])
         dfa, dfu = self.generate_tables(df)
 
-        for index, row in dfu.fillna(0).iterrows():
+        for index, row in dfa.fillna(0).iterrows():
             yield index, (row["constraint_mean"], row["community_entropy"])
 
     def reducer(self, key, value):

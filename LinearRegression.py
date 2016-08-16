@@ -20,6 +20,7 @@ import numpy as np
 from scipy.stats import entropy
 from collections import Counter
 from sklearn import datasets, linear_model
+from scipy import stats
 
 def tag_entro(X):
     return entropy(Counter(X).values())
@@ -47,12 +48,11 @@ class toCSV(MRJob):
             Y.append(y)
 
         # Create linear regression object
-        regr = linear_model.LinearRegression()
 
         # Train the model using the training sets
-        regr.fit(np.reshape(X, (-1, 1)), np.reshape(Y, (-1, 1)))
+        rho, pval = stats.spearmanr(X, Y)
 
-        yield None, ','.join([str(key), str(regr.coef_[0][0])])
+        yield None, ','.join([str(key), str(rho), str(pval)])
 
 
     def steps(self):

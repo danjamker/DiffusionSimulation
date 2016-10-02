@@ -94,6 +94,8 @@ class metric(object):
 
         #Tag
         self.tag = None
+        self.tag_list = []
+        self.tag_entropy = 0
 
     def add(self, n, step_time=None, tag=None):
         if n is not None:
@@ -111,7 +113,8 @@ class metric(object):
                     self.constraint = node["constraint"]
                 self.degrees = self.G.degree(n)
                 self.tag = tag
-
+                self.tag_list.append(tag)
+                self.tag_entropy = scipy.stats.entropy(np.bincount(self.tag_list))
                 if node["activated"] == 1:
                     self.numberActivatedUsers += 1
                     self.numberActivatedUsersnorm = self.numberActivatedUsers / self.numberOfNodes
